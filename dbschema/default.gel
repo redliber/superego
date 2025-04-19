@@ -1,0 +1,18 @@
+module default {
+  type Entry {
+    required property entryTime -> datetime {
+        default := datetime_current();
+    }
+    multi sessions -> Session {
+        constraint exclusive;
+    }
+    index on (.entryTime);
+  };
+
+  type Session {
+    required property sessionTime -> datetime {
+        default := datetime_current();
+    }
+  }
+
+};
