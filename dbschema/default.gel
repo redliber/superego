@@ -1,18 +1,52 @@
 module default {
+  # Enum for sessionType (work or break)
+  scalar type SessionType extending enum<work, break>;
+
   type Entry {
     required property entryTime -> datetime {
-        default := datetime_current();
-    }
-    multi sessions -> Session {
-        constraint exclusive;
-    }
+      default := datetime_current();
+      annotation title := 'Start time of the Pomodoro entry';
+    };
+    required property entryName -> str {
+      default := 'Pomodoro Entry';
+      annotation title := 'Name of the Pomodoro entry';
+    };
+    required property entryEfficiency -> int16 {
+      constraint min_value(1);
+      constraint max_value(10);
+      annotation title := 'Efficiency score (1-10) for the entry';
+      default := 5;
+    };
+    property entryJournal -> str {
+      annotation title := 'Reflection paragraph for the entry';
+    };
+    multi link sessions -> Session {
+      annotation title := 'Sessions associated with this entry';
+    };
     index on (.entryTime);
-  };
-
-  type Session {
-    required property sessionTime -> datetime {
-        default := datetime_current();
-    }
   }
 
-};
+  type Session {
+    required property sessionIndex -> int32 {
+      annotation title := 'Order of the session within the entry';
+      default := 0;
+    };
+    required property sessionTime -> datetime {
+      default := datetime_current();
+      annotation title := 'Start time of the session';
+    };
+    required property sessionDuration -> duration {
+      annotation title := 'Duration of the session';
+      default := <duration>'25 minutes';
+    };
+    required property sessionType -> SessionType {
+      annotation title := 'Type of session (work or break)';
+      default := 'work';
+    };
+    link entry -> Entry {
+      annotation title := 'Entry this session belongs to';
+    };
+    index on (.sessionIndex);
+    index on (.sessionTime);
+  }
+}
