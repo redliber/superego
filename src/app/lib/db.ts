@@ -10,7 +10,7 @@ export async function createEntry() {
 }
 
 export async function getSessionByID(sessionID: string) {
-  console.log('Session ID Received -> ', sessionID)
+  // console.log('Session ID Received -> ', sessionID)
   const data = await client.query(`select default::Session {
     id,
     sessionTime,
