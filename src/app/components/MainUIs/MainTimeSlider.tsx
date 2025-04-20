@@ -1,6 +1,8 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 
-export default function MainTimeSlider({onChangeCallback, useDuration}: {onChangeCallback: (value: number) => void, useDuration: number}) {
+export default function MainTimeSlider({onChangeCallback, useDuration, useRest}: {onChangeCallback: (value: number) => void, useDuration: number, useRest: boolean}) {
+  const [generalColor, setGeneralColor] = useState('var(--color-green-400)')
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(event.target.value)
     onChangeCallback(newValue)
@@ -8,10 +10,18 @@ export default function MainTimeSlider({onChangeCallback, useDuration}: {onChang
   
   const percentage = ((useDuration - 5) / (60 - 5)) * 100;
 
+  useEffect(() => {
+    if (useRest) {
+      setGeneralColor('var(--color-green-400)')
+    } else {
+      setGeneralColor('var(--color-amber-400)')
+    }
+  })
+
   return (
-    <div className="flex flex-col my-10">
-      <div className="flex flex-row p-2 justify-between">
-        <p className="text-9xl font-black">{ useDuration } Minutes </p>
+    <div className="flex flex-col my-12">
+      <div className="flex flex-row p-2 mb-12 justify-between">
+        <p className="text-9xl font-black leading-28"><span style={{color: generalColor}}>{ useRest ? 'Rest for ' : 'Work for ' }</span>{ useDuration } Minutes </p>
         {/* <p className="place-self-end py-4 text-3xl">MINUTES</p> */}
       </div>
       <input
@@ -38,14 +48,14 @@ export default function MainTimeSlider({onChangeCallback, useDuration}: {onChang
           -webkit-appearance: none;
           appearance: none;
           height: 100%;
-          width: 15px;
+          width: 25px;
           background-color: var(--color-zinc-800);
           cursor: pointer;
           transition: .2s ease-in-out;
         }
         input[type="range"]::-moz-range-thumb {
           height: 100%;
-          width: 15px;
+          width: 25px;
           background-color: var(--color-zinc-800);
           cursor: pointer;
           transition: .2s ease-in-out;
@@ -58,7 +68,7 @@ export default function MainTimeSlider({onChangeCallback, useDuration}: {onChang
           height: 100%;
           background: linear-gradient(
             to right,
-            var(--color-amber-400) ${percentage}%,
+            ${generalColor} ${percentage}%,
             var(--color-zinc-100) ${percentage}%
           ); /* Dynamic track fill */
           border-radius: 4px;
@@ -68,7 +78,7 @@ export default function MainTimeSlider({onChangeCallback, useDuration}: {onChang
           height: 4px;
           background: linear-gradient(
             to right,
-            var(--color-amber-400) ${percentage}%,
+            ${generalColor} ${percentage}%,
             var(--color-zinc-100) ${percentage}%
           );
           border-radius: 4px;
