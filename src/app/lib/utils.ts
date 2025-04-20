@@ -22,8 +22,25 @@ export function formatInterval(interval: string): string {
 }
 
 // Add INTERVAL to TIMESTAMP
-export function addInterval(timestamp: string, interval: string): string | null {
+export function addInterval(timestamp: string, interval: string): string {
   const dt = DateTime.fromISO(timestamp);
   const dur = Duration.fromISO(interval.startsWith('PT') ? interval : `PT${interval.replace(/\s*minutes?/i, 'M')}`);
-  return dt.plus(dur).toISO(); // e.g., "2025-04-19T14:55:00Z"
+  return String(dt.plus(dur).toISO());
+}
+
+export function subInterval(timestamp: string, interval: string): string {
+  const dt = DateTime.fromISO(timestamp);
+  const dur = Duration.fromISO(interval.startsWith('PT') ? interval : `PT${interval.replace(/\s*minutes?/i, 'M')}`);
+  return String(dt.minus(dur).toISO());
+}
+
+export function subTime(timestamp1: string, timestamp2: string) : number {
+  const dt = DateTime.fromISO(timestamp1)
+  const min = DateTime.fromISO(timestamp2)
+  const differenceString = String(dt.diff(min, 'minutes').toISO())
+
+  // Remove the * 60 when finished with debugging
+  const differenceTime = Math.ceil(Number(differenceString.split('').splice(2).splice(0, differenceString.split('').length - 3 ).join('')) * 60)
+
+  return differenceTime
 }

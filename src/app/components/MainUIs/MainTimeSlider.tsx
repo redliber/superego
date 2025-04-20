@@ -1,23 +1,79 @@
 import React, { useState } from "react"
 
-export default function MainTimeSlider() {
-  const [useValue, setValue] = useState(25)
+export default function MainTimeSlider({onChangeCallback, useDuration}: {onChangeCallback: (value: number) => void, useDuration: number}) {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(event.target.value)
-    setValue(newValue)
+    onChangeCallback(newValue)
   }
+  
+  const percentage = ((useDuration - 5) / (60 - 5)) * 100;
+
   return (
-    <div className="flex flex-col">
-      <p>{ useValue } minutes</p>
+    <div className="flex flex-col my-10">
+      <div className="flex flex-row p-2 justify-between">
+        <p className="text-9xl font-black">{ useDuration } Minutes </p>
+        {/* <p className="place-self-end py-4 text-3xl">MINUTES</p> */}
+      </div>
       <input
         type="range"
         min={5}
         max={60}
-        step={5}
-        value={useValue}
+        step={1}
+        value={useDuration}
         onChange={handleChange}
-        className="h-6 bg-transparent appearance-none"
+        className="rounded-sm bg-transparent border-2 p-2 appearance-none"
+        style={{
+          height: `100px`
+        }}
         />
+      {/* Custom thumb and track styling */}
+      <style jsx>{`
+        input[type="range"]::-webkit-slider-runnable-track {
+          height: 100%;
+        }
+        input[type="range"]::-moz-range-track {
+          height: 100%;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 100%;
+          width: 15px;
+          background-color: var(--color-zinc-800);
+          cursor: pointer;
+          transition: .2s ease-in-out;
+        }
+        input[type="range"]::-moz-range-thumb {
+          height: 100%;
+          width: 15px;
+          background-color: var(--color-zinc-800);
+          cursor: pointer;
+          transition: .2s ease-in-out;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+          background-color: var(--color-amber-600);
+        }
+        input[type='range']::-webkit-slider-runnable-track {
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            to right,
+            var(--color-amber-400) ${percentage}%,
+            var(--color-zinc-100) ${percentage}%
+          ); /* Dynamic track fill */
+          border-radius: 4px;
+        }
+        input[type='range']::-moz-range-track {
+          width: 100%;
+          height: 4px;
+          background: linear-gradient(
+            to right,
+            var(--color-amber-400) ${percentage}%,
+            var(--color-zinc-100) ${percentage}%
+          );
+          border-radius: 4px;
+        }
+      `}</style>
     </div>
   )
 }

@@ -10,12 +10,8 @@ export default async function Home() {
   return (
     <div className="w-full h-full flex flex-col">
       <div className="w-full px-10 py-20">
-        <div className="w-full flex flex-col my-10">
-          <p className="text-9xl font-black font-gothic">superego</p>
-        </div>
-        <div className="w-full flex flex-row gap-4">
+        <div className="w-full flex flex-col">
           <AddEntry/>
-          {/* <MainInputText label="Entry Name"/> */}
         </div>
       </div>
       <Entries/>

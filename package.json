@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@uidotdev/usehooks": "^2.4.1",
     "gel": "^2.0.2",
     "luxon": "^3.6.1",
     "next": "15.3.1",
