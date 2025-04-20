@@ -94,6 +94,14 @@ export default function AddEntry() {
     setFocusTitle(e.target.value)
   }
 
+  function recordFocusHandler() {
+
+  }
+
+  function postFocusEntry() {
+    
+  }
+
   return (
     <>
       <div className="flex flex-wrap mb-10 font-thin text-sm">
@@ -139,7 +147,7 @@ export default function AddEntry() {
           </MainButton>
         </div>
         <div>
-          <MainButton onClickHandler={cleanFocusHandler} buttonType="bordered">
+          <MainButton onClickHandler={recordFocusHandler} buttonType="bordered">
               RECORD FOCUS
           </MainButton>
         </div>
