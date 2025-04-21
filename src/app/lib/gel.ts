@@ -1,3 +1,3 @@
-import { createClient } from "gel";
+import { createClient, createHttpClient } from "gel";
 
 export const client = createClient();

@@ -2,3 +2,6 @@ watch = []
 
 [instance]
 server-version = "6.4"
+
+[hooks]
+schema.update.after = "npx @gel/generate edgeql-js"

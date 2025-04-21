@@ -16,13 +16,12 @@ export default function MainTimeSlider({onChangeCallback, useDuration, useRest}:
     } else {
       setGeneralColor('var(--color-amber-400)')
     }
-  })
+  }, [useRest])
 
   return (
     <div className="flex flex-col my-12">
       <div className="flex flex-row p-2 mb-12 justify-between">
-        <p className="text-9xl font-black leading-28"><span style={{color: generalColor}}>{ useRest ? 'Rest for ' : 'Work for ' }</span>{ useDuration } Minutes </p>
-        {/* <p className="place-self-end py-4 text-3xl">MINUTES</p> */}
+        <p className="text-9xl font-black leading-28 overflow-hidden text-ellipsis"><span style={{color: generalColor}}>{ useRest ? 'Rest for ' : 'Work for ' }</span><br></br>{ useDuration } Minutes </p>
       </div>
       <input
         type="range"

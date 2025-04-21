@@ -15,7 +15,7 @@ module default {
       constraint min_value(1);
       constraint max_value(10);
       annotation title := 'Efficiency score (1-10) for the entry';
-      default := 5;
+      default := 4;
     };
     property entryJournal -> str {
       annotation title := 'Reflection paragraph for the entry';
@@ -23,7 +23,7 @@ module default {
     multi link sessions -> Session {
       annotation title := 'Sessions associated with this entry';
     };
-    index on (.entryTime);
+    index on (.entryTime);  
   }
 
   type Session {

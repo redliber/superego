@@ -7,14 +7,20 @@ import { DateTime } from "luxon";
 import MainButton from "../MainUIs/MainButton";
 import MainTimeSlider from "../MainUIs/MainTimeSlider";
 import MainInputText from "../MainUIs/MainInputText";
+import { EntryObject, SessionObject } from "@/app/lib/types";
+import { createEntry } from "@/app/lib/db";
+
+
 
 export default function AddEntry() {
   const [beginFocus, setBeginFocus] = useState(false)
-
-  const [initDuration, setInitDuration] = useState(25)
-  const [useDuration, setDuration] = useState(25)
+  const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
+  const [useSessionsArray, setSessionsArray] = useState<SessionObject[]>([])
+  
   const [startCount, setStartCount] = useState(false)
-  // Use M instead of S when finished with debugging
+  const [initDuration, setInitDuration] = useState(25)
+  
+  const [useDuration, setDuration] = useState(25)
   const [useDeadline, setDeadline] = useState('')
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
@@ -22,13 +28,28 @@ export default function AddEntry() {
   const [useSessionAmt, setSessionAmt] = useState(5)
   const [useSessionIndex, setSessionIndex] = useState(0)
   const [useRest, setRest] = useState(false)
-  const [useSliderColor, setSliderColor] = useState('var(--color-amber-400)')
 
   const [useFocusTitle, setFocusTitle] = useState('')
 
+  useEffect(() => {
+    if (beginFocus) {
+      // Signifying the beginning of a Focus, saving the Focus Entry to `localStorage`. Saving `EntryObject` should only be for each beginnings of Focus.
+      const newEntryObject = {
+        entryTime: DateTime.now().toISO(),
+        entryEfficiency: 0,
+        entryJournal: '',
+        entryName: useFocusTitle,
+      };
 
+      // Update state
+      setEntryObject(newEntryObject);
+
+      // Update localStorage with the same object
+      localStorage.setItem('EntryObject', JSON.stringify(newEntryObject));
+    }
+  }, [beginFocus])
   
-
+  // Logic for Starting Count
   useEffect(() => {
     if (startCount) {
       const interval = setInterval(
@@ -40,14 +61,14 @@ export default function AddEntry() {
         setDifference(useTime)
         setDuration(useTime)
       }
-
   
       return () => clearInterval(interval)
     } else {
       setTime(useDuration)
     }
-  })
+  }, [startCount, useDuration, useTime])
 
+  // Logic for Finishing a Session
   useEffect(() => {
     if (useTime == 0) {
       if (!useRest) {
@@ -67,17 +88,36 @@ export default function AddEntry() {
     }
   })
 
+  // Logic for Default Durations and Beginning Focus for the First Time
   useEffect(() => {
+    // When we haven't begun a Focus, the `InitDuration` default should be modifiable along with `useDuration`; However, when we've already started the Focus session, 'beginFocus' should be true.
     if (useSessionIndex <= 0 && !startCount) {
       setInitDuration(useDuration)
     } else {
+      // When 'beginFocus' is true, the Input for Title will change to the actual Heading itself. Refer to <p> with id="focus-title".
       setBeginFocus(true)
     }
-  })
+  }, [useSessionIndex, startCount, useDuration])
+
+
 
   function startFocusHandler () {
     setStartCount(true)
-    setDeadline(addInterval(new Date().toISOString(), `PT${useDuration}S`))
+    setDeadline(addInterval(new Date().toISOString(), `PT${useDuration}S`)) // Use M instead of S when finished with debugging
+
+    const currentSession : SessionObject = {
+      sessionIndex: useSessionIndex,
+      sessionTime: DateTime.now().toISO(),
+      sessionDuration: String(useDuration),
+      sessionType: useRest ? 'rest' : 'work',
+    }
+
+    // Signifying the beginning of a Session. Saving the Session entry into `localStorage`.
+    setSessionsArray(prevSessions => [
+      ...prevSessions,
+      currentSession
+    ])
+    localStorage.setItem('SessionsArray', JSON.stringify([...useSessionsArray, currentSession]))
   }
 
   function cleanFocusHandler () {
@@ -94,8 +134,14 @@ export default function AddEntry() {
     setFocusTitle(e.target.value)
   }
 
-  function recordFocusHandler() {
-
+  async function recordFocusHandler() {
+    if (useEntryObject) {
+      // CAN'T BE USED IN A CLIENT COMPONENT BECAUSE WE'RE USING `createClient()` instead of `createHTTPClient()`
+      // const entryObjectServer = createEntry(useEntryObject)
+      useSessionsArray.forEach((item : SessionObject) => {
+        // const newItem = {...item, sessionEntry: {id: entryObjectServer.id}}
+      })
+    }
   }
 
   function postFocusEntry() {
@@ -107,12 +153,15 @@ export default function AddEntry() {
       <div className="flex flex-wrap mb-10 font-thin text-sm">
         <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p>
         <p>Deadline  <span className="px-10 font-black">{useDeadline}</span> || &emsp;&emsp;</p>
-        <p>Time Left  <span className="px-10 font-black">{String(useTime)}</span> || &emsp;&emsp;</p>
+        <p>Time  <span className="px-10 font-black">{String(useTime)}</span> || &emsp;&emsp;</p>
         <p>Difference  <span className="px-10 font-black">{useDifference}</span> || &emsp;&emsp;</p>
+        <p>Duration  <span className="px-10 font-black">{useDuration}</span> || &emsp;&emsp;</p>
         <p>Session Index  <span className="px-10 font-black">{useSessionIndex}</span> || &emsp;&emsp;</p>
         <p>Session Type  <span className="px-10 font-black">{useRest ? 'Rest' : 'Work'}</span> || &emsp;&emsp;</p>
         <p>Duration Default  <span className="px-10 font-black">{initDuration}</span> || &emsp;&emsp;</p>
         <p>Begin Focus  <span className="px-10 font-black">{String(beginFocus)}</span> || &emsp;&emsp;</p>
+        <p>Start Count  <span className="px-10 font-black">{String(startCount)}</span> || &emsp;&emsp;</p>
+        <p>Entry Object  <span className="px-10 font-black overflow-hidden text-ellipsis">{String(JSON.stringify(useEntryObject))}</span> || &emsp;&emsp;</p>
       </div>
       <div className="flex flex-row gap-4 h-2 my-6">
         {[...Array(useSessionAmt)].map((item, index) => (
@@ -126,7 +175,7 @@ export default function AddEntry() {
         {
           beginFocus && (
             <div>
-              <p className="text-4xl font-black">{useFocusTitle}</p>
+              <p className="text-4xl font-black" id="focus-title">{useFocusTitle}</p>
             </div>
           ) 
         }
