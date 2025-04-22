@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 export default function Entries() {
   const [allEntries, setAllEntries] = useState<any>()
   const [loading, setLoading] = useState<boolean>(true)
+
   useEffect(() => {
     async function fetchEntry() {
       try {
@@ -22,7 +23,8 @@ export default function Entries() {
       }
     }
     fetchEntry()
-  })
+  }, [ ])
+
   return (
     <div className="w-full px-10 py-20 flex flex-row">
       <div className="w-full text-2xl font-bold flex flex-col gap-20 overflow-y-scroll max-h-[50vh]">

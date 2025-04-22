@@ -48,10 +48,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const body = await request.json();
   try {
-    const body = await request.json();
-    const { entryTime, entryName, entryEfficiency, entryJournal } = body;
-
+    const { entryTime, entryName, entryJournal } = body;
+    const entryEfficiency = 5
+    // const entryEfficiency = body.entryEfficiency > 0 || body.entryEfficiency < 10 ? body.entryEfficiency : 5
     // Validate input
     if (!entryTime || !entryName || typeof entryEfficiency !== 'number') {
       return NextResponse.json(
@@ -60,16 +61,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await client.query(
-      `
-      INSERT INTO default::Entry (entryTime, entryName, entryEfficiency, entryJournal)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, entryTime, entryName, entryEfficiency, entryJournal
-      `,
-      [entryTime, entryName, entryEfficiency, entryJournal]
-    );
 
-    return NextResponse.json(result[0], { status: 201 });
+
+    // const result = await client.query(
+    //   `
+    //   INSERT INTO default::Entry (entryTime, entryName, entryEfficiency, entryJournal)
+    //   VALUES ($1, $2, $3, $4)
+    //   RETURNING id, entryTime, entryName, entryEfficiency, entryJournal
+    //   `,
+    //   [entryTime, entryName, entryEfficiency, entryJournal]
+    // );
+    const result = await e.insert(e.Entry, {
+      entryName: entryName,
+      entryTime: entryTime,
+      entryJournal: 'Testing Journal',
+      entryEfficiency: entryEfficiency
+    }).run(client)
+
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error creating entry:', error);
     return NextResponse.json(

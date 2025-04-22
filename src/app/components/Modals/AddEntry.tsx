@@ -8,7 +8,6 @@ import MainButton from "../MainUIs/MainButton";
 import MainTimeSlider from "../MainUIs/MainTimeSlider";
 import MainInputText from "../MainUIs/MainInputText";
 import { EntryObject, SessionObject } from "@/app/lib/types";
-import { createEntry } from "@/app/lib/db";
 
 
 
@@ -138,6 +137,8 @@ export default function AddEntry() {
     if (useEntryObject) {
       // CAN'T BE USED IN A CLIENT COMPONENT BECAUSE WE'RE USING `createClient()` instead of `createHTTPClient()`
       // const entryObjectServer = createEntry(useEntryObject)
+      console.log(await postEntry())
+
       useSessionsArray.forEach((item : SessionObject) => {
         // const newItem = {...item, sessionEntry: {id: entryObjectServer.id}}
       })
@@ -146,6 +147,24 @@ export default function AddEntry() {
 
   function postFocusEntry() {
 
+  }
+
+  async function postEntry() {
+    try {
+      const response = await fetch('/api/entry', {
+        method: 'POST',
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(useEntryObject)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to create entry: ${response.statusText}`);
+      }
+
+
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   return (
