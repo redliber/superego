@@ -1,20 +1,40 @@
-import { getAllEntries, getSessionByID } from "@/app/lib/db"
+'use client'
 import { formatInterval, formatTimestamp } from "@/app/lib/utils"
+import { useEffect, useState } from "react"
 
-export default async function Entries() {
-  const allEntries = await getAllEntries()
+export default function Entries() {
+  const [allEntries, setAllEntries] = useState<any>()
+  const [loading, setLoading] = useState<boolean>(true)
+  useEffect(() => {
+    async function fetchEntry() {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/entry`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch entry: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setAllEntries(data);
+      } catch (err) {
+        // setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchEntry()
+  })
   return (
     <div className="w-full px-10 py-20 flex flex-row">
       <div className="w-full text-2xl font-bold flex flex-col gap-20 overflow-y-scroll max-h-[50vh]">
-        {
+        { allEntries &&
           allEntries.map((entry:any) => (
             <div key={entry.id} className="">
               <p>{ entry.entryName }</p>
               <p>Efficiency - { entry.entryEfficiency }</p>
               <p>{formatTimestamp(entry.entryTime)}</p>
               <p>{ entry.entryJournal }</p>
-              <div className="font-thin text-sm">
-                {
+              {/* <div className="font-thin text-sm">
+                {entry &&
                   entry.sessions.map(async (session: any) => {
                     const sessionData:any = await getSessionByID(session.id)
                     return (
@@ -33,7 +53,7 @@ export default async function Entries() {
                     )
                   })
                 }
-              </div>
+              </div> */}
             </div>
           ))
         }

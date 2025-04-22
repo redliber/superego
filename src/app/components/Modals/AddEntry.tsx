@@ -16,10 +16,10 @@ export default function AddEntry() {
   const [beginFocus, setBeginFocus] = useState(false)
   const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
   const [useSessionsArray, setSessionsArray] = useState<SessionObject[]>([])
-  
+
   const [startCount, setStartCount] = useState(false)
   const [initDuration, setInitDuration] = useState(25)
-  
+
   const [useDuration, setDuration] = useState(25)
   const [useDeadline, setDeadline] = useState('')
   const [useDifference, setDifference] = useState(useDuration)
@@ -48,7 +48,7 @@ export default function AddEntry() {
       localStorage.setItem('EntryObject', JSON.stringify(newEntryObject));
     }
   }, [beginFocus])
-  
+
   // Logic for Starting Count
   useEffect(() => {
     if (startCount) {
@@ -61,7 +61,7 @@ export default function AddEntry() {
         setDifference(useTime)
         setDuration(useTime)
       }
-  
+
       return () => clearInterval(interval)
     } else {
       setTime(useDuration)
@@ -145,13 +145,13 @@ export default function AddEntry() {
   }
 
   function postFocusEntry() {
-    
+
   }
 
   return (
     <>
       <div className="flex flex-wrap mb-10 font-thin text-sm">
-        <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p>
+        {/* <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p> */}
         <p>Deadline  <span className="px-10 font-black">{useDeadline}</span> || &emsp;&emsp;</p>
         <p>Time  <span className="px-10 font-black">{String(useTime)}</span> || &emsp;&emsp;</p>
         <p>Difference  <span className="px-10 font-black">{useDifference}</span> || &emsp;&emsp;</p>
@@ -177,7 +177,7 @@ export default function AddEntry() {
             <div>
               <p className="text-4xl font-black" id="focus-title">{useFocusTitle}</p>
             </div>
-          ) 
+          )
         }
         {
           !beginFocus && (
@@ -185,7 +185,10 @@ export default function AddEntry() {
           )
         }
       </div>
-      <MainTimeSlider useRest={useRest} useDuration={useDuration} onChangeCallback={setDuration}/>
+      <MainTimeSlider
+        useRest={useRest}
+        useDuration={useDuration}
+        onChangeCallback={setDuration}/>
       <div className="flex flex-row justify-between">
         <div className="flex flex-row gap-10">
           <MainButton onClickHandler={startFocusHandler} buttonType="default">

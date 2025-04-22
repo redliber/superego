@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { getAllEntries, getSessionByID } from "./lib/db";
 import MainButton from "./components/MainUIs/MainButton";
 import { formatInterval, formatTimestamp } from "./lib/utils";
 import MainInputText from "./components/MainUIs/MainInputText";
@@ -14,7 +13,7 @@ export default async function Home() {
           <AddEntry/>
         </div>
       </div>
-      {/* <Entries/> */}
+      <Entries/>
     </div>
   );
 }
