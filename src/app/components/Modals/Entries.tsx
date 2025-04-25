@@ -1,16 +1,23 @@
 'use client'
 import { formatInterval, formatTimestamp } from "@/app/lib/utils"
 import { useEffect, useState } from "react"
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function Entries() {
   const [allEntries, setAllEntries] = useState<any>()
   const [loading, setLoading] = useState<boolean>(true)
 
+  const { data, error, mutate,  } = useSWR("/api/entry", fetcher);
+
   useEffect(() => {
     async function fetchEntry() {
       try {
         setLoading(true);
-        const response = await fetch(`/api/entry`);
+        const response = await fetch(`/api/entry`, {
+          next: {tags: ['entries']}
+        });
         if (!response.ok) {
           throw new Error(`Failed to fetch entry: ${response.statusText}`);
         }
@@ -28,8 +35,8 @@ export default function Entries() {
   return (
     <div className="w-full px-10 py-20 flex flex-row">
       <div className="w-full text-2xl font-bold flex flex-col gap-20 overflow-y-scroll max-h-[50vh]">
-        { allEntries &&
-          allEntries.map((entry:any) => (
+        { data &&
+          data.map((entry:any) => (
             <div key={entry.id} className="">
               <p>{ entry.entryName }</p>
               <p>Efficiency - { entry.entryEfficiency }</p>
@@ -63,7 +70,7 @@ export default function Entries() {
       <div className="w-full font-thin font-mono text-sm overflow-y-scroll max-h-[50vh]">
         <pre className="wrap">
           {
-            JSON.stringify(allEntries, null, 2)
+            JSON.stringify(data, null, 2)
           }
         </pre>
       </div>

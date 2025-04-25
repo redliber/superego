@@ -9,6 +9,12 @@ export function formatTimestamp(timestamp: string): string {
   return dt.toLocaleString(DateTime.DATETIME_MED)
 }
 
+export function parseTimeZoneBeforePOST(timestamp:string): Date {
+  const dateObject = new Date(timestamp)
+
+  return new Date(Date.UTC(dateObject.getFullYear(), dateObject.getMonth(), dateObject.getDate(), dateObject.getHours(), dateObject.getMinutes(), dateObject.getSeconds()))
+}
+
 // Display in user's time zone
 export function formatTimestampInZone(timestamp: string, timeZone: string): string {
   const dt = DateTime.fromISO(timestamp).setZone(timeZone); // e.g., "America/New_York"

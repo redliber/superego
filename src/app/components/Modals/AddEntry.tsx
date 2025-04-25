@@ -9,9 +9,15 @@ import MainTimeSlider from "../MainUIs/MainTimeSlider";
 import MainInputText from "../MainUIs/MainInputText";
 import { EntryObject, SessionObject } from "@/app/lib/types";
 
+import useSWR, {useSWRConfig} from 'swr';
+
+
 
 
 export default function AddEntry() {
+  const { mutate } = useSWRConfig()
+
+
   const [beginFocus, setBeginFocus] = useState(false)
   const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
   const [useSessionsArray, setSessionsArray] = useState<SessionObject[]>([])
@@ -137,7 +143,7 @@ export default function AddEntry() {
     if (useEntryObject) {
       // CAN'T BE USED IN A CLIENT COMPONENT BECAUSE WE'RE USING `createClient()` instead of `createHTTPClient()`
       // const entryObjectServer = createEntry(useEntryObject)
-      console.log(await postEntry())
+      await postEntry()
 
       useSessionsArray.forEach((item : SessionObject) => {
         // const newItem = {...item, sessionEntry: {id: entryObjectServer.id}}
@@ -161,6 +167,7 @@ export default function AddEntry() {
         throw new Error(`Failed to create entry: ${response.statusText}`);
       }
 
+      mutate("/api/entry")
 
     } catch (e) {
       console.error(e)

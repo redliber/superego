@@ -22,6 +22,7 @@ module default {
     };
     multi link sessions -> Session {
       annotation title := 'Sessions associated with this entry';
+      on source delete delete target;
     };
     index on (.entryTime);  
   }
@@ -45,6 +46,7 @@ module default {
     };
     link entry -> Entry {
       annotation title := 'Entry this session belongs to';
+      on target delete allow;
     };
     index on (.sessionIndex);
     index on (.sessionTime);

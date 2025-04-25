@@ -1,6 +1,8 @@
 import { client } from '@/app/lib/gel';
 import { NextResponse } from 'next/server';
 import e from "@/../dbschema/edgeql-js"
+import { parseTimeZoneBeforePOST } from '@/app/lib/utils';
+import { revalidateTag } from 'next/cache';
 
 // Ensure the route runs in Node.js runtime
 export const runtime = 'nodejs';
@@ -61,22 +63,18 @@ export async function POST(request: Request) {
       );
     }
 
-
-
-    // const result = await client.query(
-    //   `
-    //   INSERT INTO default::Entry (entryTime, entryName, entryEfficiency, entryJournal)
-    //   VALUES ($1, $2, $3, $4)
-    //   RETURNING id, entryTime, entryName, entryEfficiency, entryJournal
-    //   `,
-    //   [entryTime, entryName, entryEfficiency, entryJournal]
-    // );
     const result = await e.insert(e.Entry, {
       entryName: entryName,
-      entryTime: entryTime,
+      entryTime: parseTimeZoneBeforePOST(entryTime),
       entryJournal: 'Testing Journal',
       entryEfficiency: entryEfficiency
     }).run(client)
+
+    revalidateTag('entries')
+    
+    // const { mutate } = useSWRConfig()
+    // mutate("/api/entry");
+
 
 
     return NextResponse.json(result);
@@ -86,5 +84,7 @@ export async function POST(request: Request) {
       { error: 'Failed to create entry' },
       { status: 500 }
     );
+  } finally {
+    revalidateTag('entries')
   }
 }

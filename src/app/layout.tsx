@@ -3,6 +3,7 @@ import { Space_Grotesk } from "next/font/google";
 import localFont from 'next/font/local'
 
 import "./globals.css";
+import { SWRConfig } from "swr";
 
 const mainFont = Space_Grotesk({
   subsets: ["latin"],
@@ -18,18 +19,25 @@ export const metadata: Metadata = {
   description: "Pomodoro Session Tracking",
 };
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html>
-      <body
-        className={`${mainFont.className} ${gothicExtended.variable} antialiased`}
-      >
-        {children}
-      </body>
-    </html>
+    <SWRConfig 
+      // value={{fetcher: fetcher}}
+    >
+      <html>
+        <body
+          className={`${mainFont.className} ${gothicExtended.variable} antialiased`}
+        >
+            {children}
+        </body>
+      </html>
+    </SWRConfig>
   );
 }

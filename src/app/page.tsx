@@ -13,7 +13,7 @@ export default async function Home() {
           <AddEntry/>
         </div>
       </div>
-      <Entries/>
+      <Entries />
     </div>
   );
 }
