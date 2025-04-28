@@ -14,7 +14,6 @@ export type $EntryλShape = $.typeutil.flatten<_std.$Object_8ce8c71ee4fa5f73840c
   "entryJournal": $.PropertyDesc<_std.$str, $.Cardinality.AtMostOne, false, false, false, false>;
   "entryName": $.PropertyDesc<_std.$str, $.Cardinality.One, false, false, false, true>;
   "entryEfficiency": $.PropertyDesc<_std.$int16, $.Cardinality.One, false, false, false, true>;
-  "sessions": $.LinkDesc<$Session, $.Cardinality.Many, {}, false, false,  false, false>;
   "<entry[is Session]": $.LinkDesc<$Session, $.Cardinality.Many, {}, false, false,  false, false>;
   "<entry": $.LinkDesc<$.ObjectType, $.Cardinality.Many, {}, false, false,  false, false>;
 }>;
@@ -31,8 +30,6 @@ export type $SessionλShape = $.typeutil.flatten<_std.$Object_8ce8c71ee4fa5f7384
   "sessionDuration": $.PropertyDesc<_std.$duration, $.Cardinality.One, false, false, false, true>;
   "sessionType": $.PropertyDesc<$SessionType, $.Cardinality.One, false, false, false, true>;
   "entry": $.LinkDesc<$Entry, $.Cardinality.AtMostOne, {}, false, false,  false, false>;
-  "<sessions[is Entry]": $.LinkDesc<$Entry, $.Cardinality.Many, {}, false, false,  false, false>;
-  "<sessions": $.LinkDesc<$.ObjectType, $.Cardinality.Many, {}, false, false,  false, false>;
 }>;
 type $Session = $.ObjectType<"default::Session", $SessionλShape, null, [
   ..._std.$Object_8ce8c71ee4fa5f73840c22d7eaa58588['__exclusives__'],

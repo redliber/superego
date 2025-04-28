@@ -2,6 +2,7 @@
 import { client } from '@/app/lib/gel';
 import { NextResponse } from 'next/server';
 import e from "@/../dbschema/edgeql-js"
+import { parseTimeZoneBeforePOST } from '@/app/lib/utils';
 
 // Ensure the route runs in Node.js runtime
 export const runtime = 'nodejs';
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { sessionTime, sessionDuration, sessionIndex, sessionType } = body;
+    const { sessionTime, sessionDuration, sessionIndex, sessionType, sessionEntry } = body;
 
     // Validate input
     if (!sessionTime || !sessionDuration || typeof sessionIndex !== 'number') {
@@ -62,16 +63,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await client.query(
-      `
-      INSERT INTO default::Session (sessionTime, sessionDuration, sessionIndex, sessionType)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, sessionTime, sessionDuration, sessionIndex, sessionType
-      `,
-      [sessionTime, sessionDuration, sessionIndex, sessionType]
-    );
+    const result = await e.insert(e.Session, {
+      sessionTime: parseTimeZoneBeforePOST(sessionTime),
+      sessionDuration: sessionDuration,
+      sessionIndex: sessionIndex,
+      sessionType: sessionType,
+      entry: e.select(e.Entry, () => ({
+        filter_single: {id: e.uuid(sessionEntry.id)}
+      }))
+    }).run(client)
 
-    return NextResponse.json(result[0], { status: 201 });
+    return NextResponse.json(result.id, { status: 201 });
   } catch (error) {
     console.error('Error creating session:', error);
     return NextResponse.json(

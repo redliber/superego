@@ -114,7 +114,7 @@ export default function AddEntry() {
       sessionIndex: useSessionIndex,
       sessionTime: DateTime.now().toISO(),
       sessionDuration: String(useDuration),
-      sessionType: useRest ? 'rest' : 'work',
+      sessionType: useRest ? 'break' : 'work',
     }
 
     // Signifying the beginning of a Session. Saving the Session entry into `localStorage`.
@@ -133,26 +133,31 @@ export default function AddEntry() {
     setStartCount(false)
     setRest(false)
     setFocusTitle('')
+    localStorage.removeItem('SessionsArray')
+    localStorage.removeItem('EntryObject')
   }
 
   function onChangeHandler(e: ChangeEvent<HTMLInputElement>) {
     setFocusTitle(e.target.value)
   }
 
+  function postFocusEntry() {
+
+  }
+
   async function recordFocusHandler() {
     if (useEntryObject) {
       // CAN'T BE USED IN A CLIENT COMPONENT BECAUSE WE'RE USING `createClient()` instead of `createHTTPClient()`
-      // const entryObjectServer = createEntry(useEntryObject)
-      await postEntry()
+      const getEntryID = await postEntry()
 
-      useSessionsArray.forEach((item : SessionObject) => {
-        // const newItem = {...item, sessionEntry: {id: entryObjectServer.id}}
-      })
+      const sessionsIDs: any[] = []
+
+      await Promise.all(useSessionsArray.map(async (item : SessionObject) => {
+        const newItem = {...item, sessionEntry: {id: getEntryID}}
+        const sessionID = await postSession(getEntryID, newItem)
+        sessionsIDs.push(sessionID)
+      }))
     }
-  }
-
-  function postFocusEntry() {
-
   }
 
   async function postEntry() {
@@ -163,12 +168,36 @@ export default function AddEntry() {
         body: JSON.stringify(useEntryObject)
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
         throw new Error(`Failed to create entry: ${response.statusText}`);
       }
 
       mutate("/api/entry")
 
+      return result
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  async function postSession(entryID: string, sessionObject: SessionObject) {
+    try {
+      const response = await fetch('/api/session', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(sessionObject)
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(`Failed to create session: ${response.statusText}`)
+      }
+      mutate('/api/session')
+
+      return result
     } catch (e) {
       console.error(e)
     }
@@ -176,8 +205,11 @@ export default function AddEntry() {
 
   return (
     <>
-      <div className="flex flex-wrap mb-10 font-thin text-sm">
-        {/* <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p> */}
+
+
+
+      {/* <div className="flex flex-wrap mb-10 font-thin text-sm">
+        <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p>
         <p>Deadline  <span className="px-10 font-black">{useDeadline}</span> || &emsp;&emsp;</p>
         <p>Time  <span className="px-10 font-black">{String(useTime)}</span> || &emsp;&emsp;</p>
         <p>Difference  <span className="px-10 font-black">{useDifference}</span> || &emsp;&emsp;</p>
@@ -188,7 +220,10 @@ export default function AddEntry() {
         <p>Begin Focus  <span className="px-10 font-black">{String(beginFocus)}</span> || &emsp;&emsp;</p>
         <p>Start Count  <span className="px-10 font-black">{String(startCount)}</span> || &emsp;&emsp;</p>
         <p>Entry Object  <span className="px-10 font-black overflow-hidden text-ellipsis">{String(JSON.stringify(useEntryObject))}</span> || &emsp;&emsp;</p>
-      </div>
+      </div> */}
+
+
+
       <div className="flex flex-row gap-4 h-2 my-6">
         {[...Array(useSessionAmt)].map((item, index) => (
           <div key={index} className="min-h-full w-1/5" style={{

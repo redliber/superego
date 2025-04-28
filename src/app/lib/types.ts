@@ -1,4 +1,4 @@
-export type SessionType = 'work' | 'rest';
+export type SessionType = 'work' | 'break';
 
 export interface IdObject {
     id: string
