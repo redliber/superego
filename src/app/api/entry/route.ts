@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
     const result = await e.insert(e.Entry, {
       entryName: entryName,
-      entryTime: parseTimeZoneBeforePOST(entryTime),
+      entryTime: entryTime,
       entryJournal: 'Testing Journal',
       entryEfficiency: entryEfficiency
     }).run(client)

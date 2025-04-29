@@ -1,7 +1,7 @@
 'use client'
 import { ChangeEvent, ReactEventHandler, useEffect, useMemo, useState } from "react";
 import { useCounter } from "@uidotdev/usehooks";
-import { addInterval, subInterval, subTime } from "@/app/lib/utils";
+import { addInterval, parseTimeZoneBeforePOST, subInterval, subTime } from "@/app/lib/utils";
 import { DateTime } from "luxon";
 
 import MainButton from "../MainUIs/MainButton";
@@ -40,7 +40,7 @@ export default function AddEntry() {
     if (beginFocus) {
       // Signifying the beginning of a Focus, saving the Focus Entry to `localStorage`. Saving `EntryObject` should only be for each beginnings of Focus.
       const newEntryObject = {
-        entryTime: DateTime.now().toISO(),
+        entryTime: parseTimeZoneBeforePOST(DateTime.now().toISO()),
         entryEfficiency: 0,
         entryJournal: '',
         entryName: useFocusTitle,
@@ -112,7 +112,7 @@ export default function AddEntry() {
 
     const currentSession : SessionObject = {
       sessionIndex: useSessionIndex,
-      sessionTime: DateTime.now().toISO(),
+      sessionTime: parseTimeZoneBeforePOST(DateTime.now().toISO()),
       sessionDuration: String(useDuration),
       sessionType: useRest ? 'break' : 'work',
     }

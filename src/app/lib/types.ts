@@ -6,7 +6,7 @@ export interface IdObject {
 
 export interface EntryObject {
     id?: string;
-    entryTime: string;
+    entryTime: Date;
     entryName: string;
     entryEfficiency: number;
     entryJournal: string;
@@ -16,7 +16,7 @@ export interface EntryObject {
 export interface SessionObject {
     id?: string;
     sessionIndex: number;
-    sessionTime: string;
+    sessionTime: Date;
     sessionDuration: string;
     sessionType: SessionType;
     sessionEntry?: IdObject

@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     }
 
     const result = await e.insert(e.Session, {
-      sessionTime: parseTimeZoneBeforePOST(sessionTime),
+      sessionTime: sessionTime,
       sessionDuration: sessionDuration,
       sessionIndex: sessionIndex,
       sessionType: sessionType,
