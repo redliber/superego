@@ -7,7 +7,7 @@ export default function MainButton({children, onClickHandler, buttonType="defaul
       ${ composition }
       my-2 p-4 max-w-52 cursor-pointer rounded-xs
       text-center font-black
-      hover:bg-amber-400  hover:scale-x-105 hover:scale-y-110 active:bg-zinc-100 active:scale-95
+      hover:bg-amber-400 hover:scale-x-105 hover:scale-y-110 active:bg-zinc-100 active:scale-95
       transition duration-100 ease-in-out
       `} onClick={onClickHandler} {...rest}>
       {children}

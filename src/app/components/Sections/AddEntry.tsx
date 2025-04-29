@@ -1,5 +1,5 @@
 'use client'
-import { ChangeEvent, ReactEventHandler, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, ReactEventHandler, useEffect, useMemo, useRef, useState } from "react";
 import { useCounter } from "@uidotdev/usehooks";
 import { addInterval, parseTimeZoneBeforePOST, subInterval, subTime } from "@/app/lib/utils";
 import { DateTime } from "luxon";
@@ -10,6 +10,8 @@ import MainInputText from "../MainUIs/MainInputText";
 import { EntryObject, SessionObject } from "@/app/lib/types";
 
 import useSWR, {useSWRConfig} from 'swr';
+import MainModal from "../MainUIs/MainModal";
+import { Preahvihear } from "next/font/google";
 
 
 
@@ -35,6 +37,10 @@ export default function AddEntry() {
   const [useRest, setRest] = useState(false)
 
   const [useFocusTitle, setFocusTitle] = useState('')
+  const [useFocusJournal, setFocusJournal] = useState('')
+
+  const modalRef = useRef(null)
+  const [useLoadingPosting, setLoadingPosting] = useState(false)
 
   useEffect(() => {
     if (beginFocus) {
@@ -137,8 +143,12 @@ export default function AddEntry() {
     localStorage.removeItem('EntryObject')
   }
 
-  function onChangeHandler(e: ChangeEvent<HTMLInputElement>) {
+  function onTitleChangeHandler(e: ChangeEvent<HTMLInputElement>) {
     setFocusTitle(e.target.value)
+  }
+
+  function onJournalChangeHandler(e: ChangeEvent<HTMLTextAreaElement>) {
+    setFocusJournal(e.target.value)
   }
 
   function postFocusEntry() {
@@ -147,25 +157,46 @@ export default function AddEntry() {
 
   async function recordFocusHandler() {
     if (useEntryObject) {
-      // CAN'T BE USED IN A CLIENT COMPONENT BECAUSE WE'RE USING `createClient()` instead of `createHTTPClient()`
-      const getEntryID = await postEntry()
-
-      const sessionsIDs: any[] = []
-
-      await Promise.all(useSessionsArray.map(async (item : SessionObject) => {
-        const newItem = {...item, sessionEntry: {id: getEntryID}}
-        const sessionID = await postSession(getEntryID, newItem)
-        sessionsIDs.push(sessionID)
+      setEntryObject((prev:any) => ({
+        ...prev,
+        ['entryJournal']: useFocusJournal
       }))
+      
+      const entry = {
+        ...useEntryObject,
+        entryJournal: useFocusJournal
+      }
+
+      try {
+        setLoadingPosting(true)
+        const getEntryID = await postEntry(entry)
+  
+        const sessionsIDs: any[] = []
+  
+        await Promise.all(useSessionsArray.map(async (item : SessionObject) => {
+          const newItem = {...item, sessionEntry: {id: getEntryID}}
+          const sessionID = await postSession(getEntryID, newItem)
+          sessionsIDs.push(sessionID)
+        }))
+      } catch (e) {
+        console.error(`Error at recordFocusHandler, ${e}`)
+        throw e
+      } finally {
+        cleanFocusHandler()
+        // @ts-ignore
+        modalRef.current.closeModal()
+      }
     }
+
+    setLoadingPosting(false)
   }
 
-  async function postEntry() {
+  async function postEntry(entry: EntryObject) {
     try {
       const response = await fetch('/api/entry', {
         method: 'POST',
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(useEntryObject)
+        body: JSON.stringify(entry)
       })
 
       const result = await response.json()
@@ -242,7 +273,7 @@ export default function AddEntry() {
         }
         {
           !beginFocus && (
-            <MainInputText onChangeHandler={onChangeHandler} label="Task to focus on"/>
+            <MainInputText onChangeHandler={onTitleChangeHandler} label="Task to focus on"/>
           )
         }
       </div>
@@ -259,11 +290,37 @@ export default function AddEntry() {
               CLEAR FOCUS
           </MainButton>
         </div>
-        <div>
-          <MainButton onClickHandler={recordFocusHandler} buttonType="bordered">
-              RECORD FOCUS
-          </MainButton>
-        </div>
+        {
+          beginFocus && (
+            <div>
+              <MainModal ref={modalRef} id='text-modal' title='Write your Examen' triggerText="RECORD FOCUS">
+                <div className="mt-24 flex flex-col">
+                  <MainInputText
+                    onChangeHandler={onJournalChangeHandler}
+                    type="textarea"/>
+                  <div className="flex flex-row">
+                    {
+                      !useLoadingPosting && (
+                        <div className="grow">
+                          <MainButton
+                            onClickHandler={recordFocusHandler} buttonType="default">
+                              POST
+                          </MainButton>
+                        </div>
+                      )
+                    } {
+                      useLoadingPosting && (
+                        <div className="my-2 p-4 font-black">
+                          <p>LOADING</p>
+                        </div>
+                      )
+                    }
+                </div>
+                </div>
+              </MainModal>
+            </div>
+          )
+        }
       </div>
     </>
   )

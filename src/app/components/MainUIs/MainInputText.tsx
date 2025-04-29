@@ -1,7 +1,36 @@
-import { ChangeEvent, ReactEventHandler, ReactNode } from "react"
+'use client'
+import { ChangeEvent, ChangeEventHandler, ReactEventHandler, ReactNode, useEffect, useRef, useState } from "react"
 
-export default function MainInputText({label, onChangeHandler}: {label: string, onChangeHandler: (e: ChangeEvent<HTMLInputElement>) => void}) {
-  return (
-    <input className="text-2xl rounded-xs border-[1px] border-zinc-100 p-3 my-2 w-full" placeholder={ label } onChange={onChangeHandler}></input>
-  )
+export default function MainInputText({label='Insert Text Here', onChangeHandler, type='input'}: {label?: string, onChangeHandler?: (e:any) => void, type?: string}) {
+  const textAreaRef = useRef(null)
+  const [useTextArea, setTextArea] = useState(label)
+
+  useEffect(() => {
+    
+
+  })
+
+  if (type == 'input') {
+    return (
+      <input
+        className="text-2xl rounded-xs border-[1px] border-zinc-100 p-3 my-2 w-full"
+        placeholder={ label }
+        onChange={onChangeHandler}></input>
+    )
+  } else if (type == 'textarea') {
+    return (
+      <textarea
+        ref={textAreaRef}
+        className="
+          placeholder:text-4xl text-xl focus:placeholder:text-xl 
+          rounded-xs border-[1px] border-zinc-100 
+          p-3 my-2 w-full resize-none 
+          transition-all placeholder:transition-all 
+          duration-300"
+        rows={5} cols={33}
+        placeholder={label}
+        onChange={onChangeHandler}
+        ></textarea>
+    )
+  }
 }

@@ -53,6 +53,7 @@ export async function POST(request: Request) {
   const body = await request.json();
   try {
     const { entryTime, entryName, entryJournal } = body;
+    console.log(`Body -->`, body)
 
     // Temporary entryEfficiency
     const entryEfficiency = 5
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
     const result = await e.insert(e.Entry, {
       entryName: entryName,
       entryTime: entryTime,
-      entryJournal: 'Testing Journal',
+      entryJournal: entryJournal,
       entryEfficiency: entryEfficiency
     }).run(client)
 

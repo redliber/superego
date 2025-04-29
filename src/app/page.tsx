@@ -2,8 +2,8 @@ import Image from "next/image";
 import MainButton from "./components/MainUIs/MainButton";
 import { formatInterval, formatTimestamp } from "./lib/utils";
 import MainInputText from "./components/MainUIs/MainInputText";
-import AddEntry from "./components/Modals/AddEntry";
-import Entries from "./components/Modals/Entries";
+import AddEntry from "./components/Sections/AddEntry";
+import Entries from "./components/Sections/Entries";
 
 export default async function Home() {
   return (
