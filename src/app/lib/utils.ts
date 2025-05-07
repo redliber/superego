@@ -1,6 +1,11 @@
 // lib/utils.ts
 import { DateTime, Interval, Duration } from "luxon";
 
+export function fitRange(value:number, initialMin:number, initialMax:number, targetMin:number, targetMax:number): number {
+  const ratio = (value - initialMin) / (initialMax - initialMin);
+  return targetMin + ratio * (targetMax - targetMin);
+}
+
 // Parse TIMESTAMP WITH TIME ZONE
 export function formatTimestamp(timestamp: string): string {
   timestamp = JSON.stringify(timestamp)

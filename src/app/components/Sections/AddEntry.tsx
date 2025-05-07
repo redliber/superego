@@ -12,6 +12,7 @@ import { EntryObject, SessionObject } from "@/app/lib/types";
 import useSWR, {useSWRConfig} from 'swr';
 import MainModal from "../MainUIs/MainModal";
 import { Preahvihear } from "next/font/google";
+import MainTimeScrub from "../MainUIs/MainTimeScrub";
 
 
 
@@ -263,6 +264,9 @@ export default function AddEntry() {
           </div>
         ))}
       </div>
+
+
+
       <div className="min-h-24 min-w-full">
         {
           beginFocus && (
@@ -277,51 +281,68 @@ export default function AddEntry() {
           )
         }
       </div>
-      <MainTimeSlider
-        useRest={useRest}
-        useDuration={useDuration}
-        onChangeCallback={setDuration}/>
-      <div className="flex flex-row justify-between">
-        <div className="flex flex-row gap-10">
-          <MainButton onClickHandler={startFocusHandler} buttonType="default">
-              START FOCUS
-          </MainButton>
-          <MainButton onClickHandler={cleanFocusHandler} buttonType="bordered">
-              CLEAR FOCUS
-          </MainButton>
+      
+      
+      <div className="flex flex-row gap-10">
+        <div className="flex-1 w-full flex flex-col ">
+          <div className="h-8 bg-zinc-800 rounded-t-sm flex flex-row px-2 items-center border-[1px] border-b-0 text-sm">
+            Timeline
+          </div>
+          <MainTimeScrub
+
+          />
         </div>
-        {
-          beginFocus && (
-            <div>
-              <MainModal ref={modalRef} id='text-modal' title='Write your Examen' triggerText="RECORD FOCUS">
-                <div className="mt-24 flex flex-col">
-                  <MainInputText
-                    onChangeHandler={onJournalChangeHandler}
-                    type="textarea"/>
-                  <div className="flex flex-row">
-                    {
-                      !useLoadingPosting && (
-                        <div className="grow">
-                          <MainButton
-                            onClickHandler={recordFocusHandler} buttonType="default">
-                              POST
-                          </MainButton>
-                        </div>
-                      )
-                    } {
-                      useLoadingPosting && (
-                        <div className="my-2 p-4 font-black">
-                          <p>LOADING</p>
-                        </div>
-                      )
-                    }
-                </div>
-                </div>
-              </MainModal>
+        <div className="flex-4">
+          <MainTimeSlider
+            useRest={useRest}
+            useDuration={useDuration}
+            onChangeCallback={setDuration}/>
+          <div className="flex flex-row justify-between">
+            <div className="flex flex-row gap-10">
+              <MainButton onClickHandler={startFocusHandler} buttonType="default">
+                  START FOCUS
+              </MainButton>
+              <MainButton onClickHandler={cleanFocusHandler} buttonType="bordered">
+                  CLEAR FOCUS
+              </MainButton>
             </div>
-          )
-        }
+            {
+              beginFocus && (
+                <div>
+                  <MainModal ref={modalRef} id='text-modal' title='Write your Examen' triggerText="RECORD FOCUS">
+                    <div className="mt-24 flex flex-col">
+                      <MainInputText
+                        onChangeHandler={onJournalChangeHandler}
+                        type="textarea"/>
+                      <div className="flex flex-row">
+                        {
+                          !useLoadingPosting && (
+                            <div className="grow">
+                              <MainButton
+                                onClickHandler={recordFocusHandler} buttonType="default">
+                                  POST
+                              </MainButton>
+                            </div>
+                          )
+                        } {
+                          useLoadingPosting && (
+                            <div className="my-2 p-4 font-black">
+                              <p>LOADING</p>
+                            </div>
+                          )
+                        }
+                    </div>
+                    </div>
+                  </MainModal>
+                </div>
+              )
+            }
+          </div>
+        </div>
       </div>
+      
+
+
     </>
   )
 }
