@@ -3,6 +3,8 @@ import { ChangeEvent, ReactEventHandler, useEffect, useMemo, useRef, useState } 
 import { useCounter } from "@uidotdev/usehooks";
 import { addInterval, parseTimeZoneBeforePOST, subInterval, subTime } from "@/app/lib/utils";
 import { DateTime } from "luxon";
+import { useTime, useTimer } from "react-timer-hook"
+
 
 import MainButton from "../MainUIs/MainButton";
 import MainTimeSlider from "../MainUIs/MainTimeSlider";
@@ -20,11 +22,11 @@ import MainTimeScrub from "../MainUIs/MainTimeScrub";
 export default function AddEntry() {
   const { mutate } = useSWRConfig()
 
-
-  const [beginFocus, setBeginFocus] = useState(false)
+  // LOCALSTORAGE
   const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
   const [useSessionsArray, setSessionsArray] = useState<SessionObject[]>([])
-
+  
+  const [beginFocus, setBeginFocus] = useState(false)
   const [startCount, setStartCount] = useState(false)
   const [initDuration, setInitDuration] = useState(25)
 
@@ -33,10 +35,13 @@ export default function AddEntry() {
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
 
+
+  // SESSION TRACKING
   const [useSessionAmt, setSessionAmt] = useState(5)
   const [useSessionIndex, setSessionIndex] = useState(0)
   const [useRest, setRest] = useState(false)
 
+  // JOURNALING
   const [useFocusTitle, setFocusTitle] = useState('')
   const [useFocusJournal, setFocusJournal] = useState('')
 
@@ -240,7 +245,7 @@ export default function AddEntry() {
 
 
 
-      {/* <div className="flex flex-wrap mb-10 font-thin text-sm">
+      <div className="flex flex-wrap mb-10 font-thin text-sm">
         <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p>
         <p>Deadline  <span className="px-10 font-black">{useDeadline}</span> || &emsp;&emsp;</p>
         <p>Time  <span className="px-10 font-black">{String(useTime)}</span> || &emsp;&emsp;</p>
@@ -252,7 +257,7 @@ export default function AddEntry() {
         <p>Begin Focus  <span className="px-10 font-black">{String(beginFocus)}</span> || &emsp;&emsp;</p>
         <p>Start Count  <span className="px-10 font-black">{String(startCount)}</span> || &emsp;&emsp;</p>
         <p>Entry Object  <span className="px-10 font-black overflow-hidden text-ellipsis">{String(JSON.stringify(useEntryObject))}</span> || &emsp;&emsp;</p>
-      </div> */}
+      </div>
 
 
 
@@ -284,19 +289,37 @@ export default function AddEntry() {
       
       
       <div className="flex flex-row gap-10">
-        <div className="flex-1 w-full flex flex-col ">
-          <div className="h-8 bg-zinc-800 rounded-t-sm flex flex-row px-2 items-center border-[1px] border-b-0 text-sm">
+
+
+
+        <div className="flex-1 w-full flex flex-col border-[1px] p-3 rounded-md">
+          <div className="h-6 rounded-t-sm text-sm">
             Timeline
           </div>
           <MainTimeScrub
 
           />
         </div>
+
+
+
         <div className="flex-4">
+
+          <div>
+            
+          </div>
+
+
+
+
           <MainTimeSlider
             useRest={useRest}
             useDuration={useDuration}
-            onChangeCallback={setDuration}/>
+            onChangeCallback={setDuration}
+          />
+
+
+
           <div className="flex flex-row justify-between">
             <div className="flex flex-row gap-10">
               <MainButton onClickHandler={startFocusHandler} buttonType="default">
@@ -338,6 +361,9 @@ export default function AddEntry() {
               )
             }
           </div>
+
+
+
         </div>
       </div>
       

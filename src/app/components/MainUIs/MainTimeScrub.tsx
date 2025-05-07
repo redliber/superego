@@ -8,10 +8,7 @@ import { useTime, useTimer } from "react-timer-hook"
 const PLACEHOLDERDATA = [
     {start: `13:30`, end: `14:30`},
     {start: `15:00`, end: `16:00`},
-    {start: `16:30`, end: `18:00`},
-    {start: `18:11`, end: `19:03`},
-    {start: `19:10`, end: `20:00`},
-    {start: `20:04`, end: `20:10`},
+
 ]
 
 const TIME_START = 5
@@ -22,8 +19,8 @@ for(let i = TIME_START; i <= TIME_END; i++) {
     timeArray.push(i)
 }
 
-const BLOCK_HEIGHT = 100
-const TRUE_TIMEBLOCKS_HEIGHT = 100*timeArray.length
+const BLOCK_HEIGHT = 200
+const TRUE_TIMEBLOCKS_HEIGHT = BLOCK_HEIGHT*timeArray.length
 
 function fitTime (time:number) {
     return Number(fitRange(time, TIME_START, TIME_END + 1, 0, 1)) * TRUE_TIMEBLOCKS_HEIGHT
@@ -51,7 +48,7 @@ export default function MainTimeScrub() {
 
     
     return (
-        <div className="border-[1px] border-t-0 rounded-sm rounded-t-none w-full overflow-y-scroll relative overflow-x-hidden hidescrollbar flex flex-col  z-[60]"
+        <div className=" w-full overflow-y-scroll relative overflow-x-hidden hidescrollbar flex flex-col  z-[60]"
             style={{
                 height: `${maxHeight}vh`
             }}
@@ -106,13 +103,13 @@ function EventBlock({start, end} : {start:string, end:string}) {
 
     const height = endTime - startTime
     return (
-        <div className="absolute w-[90%] p-2 text-black z-30 hover:bg-amber-300 transition-all duration-200 bg-amber-500 place-self-end"
+        <div className="absolute w-[90%] px-1 text-black z-30 hover:bg-amber-300 transition-all duration-200 bg-amber-500 place-self-end"
             style={{
                 top: `${startTime}px`,
                 height: `${height}px`
             }}
         >
-            <p className="font-mono font-bold">{start} - {end}</p>
+            <p className=" ">{start} - {end}</p>
 
         </div>
     )
