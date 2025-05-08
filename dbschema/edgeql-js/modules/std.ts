@@ -12,6 +12,7 @@ import type * as _cfg from "./cfg";
 import type * as _stdcal from "./std/cal";
 import type * as _stdpg from "./std/pg";
 import type * as _schema from "./schema";
+import { $SessionType, $Entry } from "./default";
 type $anyscalar = $anypoint | $anyreal | $.EnumType | $bool | $bytes | $uuid | $str | $json | _cfg.$memory | _stdcal.$local_time | _stdcal.$relative_duration | _stdcal.$date_duration | _stdpg.$json;
 
 export type $Endian = {
@@ -2655,7 +2656,7 @@ function datetime_get<
   dt: P1,
   el: P2,
 ): datetime_getλFuncExpr2<P1, P2>;
-function datetime_get(...args: any[]) {
+function datetime_get(sessionTime: $.$expr_PathLeaf<$.TypeSet<$datetime, $.Cardinality.One>, { type: { __element__: $.ObjectType<"default::Session", { id: $.PropertyDesc<$uuid, $.Cardinality.One, true, false, true, true>; __type__: $.LinkDesc<_schema.$ObjectType, $.Cardinality.One, {}, false, false, true, false>; sessionTime: $.PropertyDesc<$datetime, $.Cardinality.One, false, false, false, true>; sessionIndex: $.PropertyDesc<$int32, $.Cardinality.One, false, false, false, true>; sessionDuration: $.PropertyDesc<$duration, $.Cardinality.One, false, false, false, true>; sessionType: $.PropertyDesc<$SessionType, $.Cardinality.One, false, false, false, true>; entry: $.LinkDesc<$Entry, $.Cardinality.AtMostOne, {}, false, false, false, false>; }, { id: true; }, $.ExclusiveTuple, string>; __cardinality__: $.Cardinality.One; }; linkName: "sessionTime"; }>, ...args: any[]) {
   const {returnType, cardinality, args: positionalArgs, namedArgs} = _.syntax.$resolveOverload('std::datetime_get', args, _.spec, [
     {args: [{typeId: "00000000-0000-0000-0000-00000000010a", optional: false, setoftype: false, variadic: false}, {typeId: "00000000-0000-0000-0000-000000000101", optional: false, setoftype: false, variadic: false}], returnTypeId: "00000000-0000-0000-0000-0000000001ff"},
     {args: [{typeId: "00000000-0000-0000-0000-00000000010b", optional: false, setoftype: false, variadic: false}, {typeId: "00000000-0000-0000-0000-000000000101", optional: false, setoftype: false, variadic: false}], returnTypeId: "00000000-0000-0000-0000-0000000001ff"},

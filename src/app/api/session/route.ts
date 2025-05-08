@@ -11,6 +11,27 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const reqTime:string[] = searchParams.get('sessionTime')!.split('-')
+    
+    const queryKeys = Array.from(searchParams.keys()).map((item) => {
+      return {[item]: searchParams.get(item)}
+    })
+
+    // function deepMerge(target:any, source:any) {
+    //   const output = { ...target };
+    //   for (const key in source) {
+    //     if (Object.prototype.hasOwnProperty.call(source, key)) {
+    //       if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+    //         output[key] = deepMerge(output[key] || {}, source[key]);
+    //       } else {
+    //         output[key] = source[key];
+    //       }
+    //     }
+    //   }
+    //   return output;
+    // }
+    
+    // const mergedObject = queryKeys.reduce((acc, curr) => deepMerge(acc, curr), {});
 
     const sessionShape = {
       id: true,
@@ -21,10 +42,9 @@ export async function GET(request: Request) {
     }
 
     if (id) {
-      // Fetch specific session by ID
       const result = await e.select(e.Session,  (session) => ({
         ...sessionShape,
-        filter_single: e.op(session.id, '=', id)
+        filter_single: {id: id}
       })).run(client)
 
       if (!result) {
@@ -35,6 +55,26 @@ export async function GET(request: Request) {
       }
 
       return NextResponse.json(result, { status: 200 });
+    } else if (reqTime) {
+      const query = `
+        select Session {
+          id,
+          sessionType,
+          sessionTime,
+          sessionDuration
+        }
+        filter std::datetime_get(.sessionTime, 'year') = <int64>$year
+          and std::datetime_get(.sessionTime, 'month') = <int64>$month
+          and std::datetime_get(.sessionTime, 'day') = <int64>$day;
+        `;
+    
+      const result = await client.query(query, {
+        year: Number(reqTime[0]),
+        month: Number(reqTime[1]),
+        day: Number(reqTime[2]),
+      });
+
+      return NextResponse.json(result, { status: 200 });
     } else {
       // Fetch all entries (existing behavior)
       const result = await e.select(e.Session, (session) => (sessionShape)).run(client)
@@ -43,7 +83,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error querying GelDATA:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch entries' },
+      { error: `Failed to fetch entry(ies) ${error} as per: ${JSON.stringify(request)}` },
       { status: 500 }
     );
   }

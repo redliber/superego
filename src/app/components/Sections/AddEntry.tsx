@@ -20,7 +20,9 @@ import MainTimeScrub from "../MainUIs/MainTimeScrub";
 
 
 export default function AddEntry() {
-  const { mutate } = useSWRConfig()
+  const { cache, mutate } = useSWRConfig()
+
+  const serverEntries = cache.get("/api/entry")
 
   // LOCALSTORAGE
   const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
@@ -259,6 +261,10 @@ export default function AddEntry() {
         <p>Entry Object  <span className="px-10 font-black overflow-hidden text-ellipsis">{String(JSON.stringify(useEntryObject))}</span> || &emsp;&emsp;</p>
       </div>
 
+      {/* <div>
+        <p>{JSON.stringify(serverEntries?.data)}</p>
+      </div> */}
+
 
 
       <div className="flex flex-row gap-4 h-2 my-6">
@@ -293,9 +299,6 @@ export default function AddEntry() {
 
 
         <div className="flex-1 w-full flex flex-col border-[1px] p-3 rounded-md">
-          <div className="h-6 rounded-t-sm text-sm">
-            Timeline
-          </div>
           <MainTimeScrub
 
           />
