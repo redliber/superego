@@ -27,7 +27,7 @@ export default function AddEntry() {
   // LOCALSTORAGE
   const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
   const [useSessionsArray, setSessionsArray] = useState<SessionObject[]>([])
-  
+
   const [beginFocus, setBeginFocus] = useState(false)
   const [startCount, setStartCount] = useState(false)
   const [initDuration, setInitDuration] = useState(25)
@@ -169,7 +169,7 @@ export default function AddEntry() {
         ...prev,
         ['entryJournal']: useFocusJournal
       }))
-      
+
       const entry = {
         ...useEntryObject,
         entryJournal: useFocusJournal
@@ -178,9 +178,9 @@ export default function AddEntry() {
       try {
         setLoadingPosting(true)
         const getEntryID = await postEntry(entry)
-  
+
         const sessionsIDs: any[] = []
-  
+
         await Promise.all(useSessionsArray.map(async (item : SessionObject) => {
           const newItem = {...item, sessionEntry: {id: getEntryID}}
           const sessionID = await postSession(getEntryID, newItem)
@@ -247,7 +247,7 @@ export default function AddEntry() {
 
 
 
-      <div className="flex flex-wrap mb-10 font-thin text-sm">
+      {/* <div className="flex flex-wrap mb-10 font-thin text-sm">
         <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p>
         <p>Deadline  <span className="px-10 font-black">{useDeadline}</span> || &emsp;&emsp;</p>
         <p>Time  <span className="px-10 font-black">{String(useTime)}</span> || &emsp;&emsp;</p>
@@ -259,7 +259,7 @@ export default function AddEntry() {
         <p>Begin Focus  <span className="px-10 font-black">{String(beginFocus)}</span> || &emsp;&emsp;</p>
         <p>Start Count  <span className="px-10 font-black">{String(startCount)}</span> || &emsp;&emsp;</p>
         <p>Entry Object  <span className="px-10 font-black overflow-hidden text-ellipsis">{String(JSON.stringify(useEntryObject))}</span> || &emsp;&emsp;</p>
-      </div>
+      </div> */}
 
       {/* <div>
         <p>{JSON.stringify(serverEntries?.data)}</p>
@@ -292,8 +292,8 @@ export default function AddEntry() {
           )
         }
       </div>
-      
-      
+
+
       <div className="flex flex-row gap-10">
 
 
@@ -309,7 +309,7 @@ export default function AddEntry() {
         <div className="flex-4">
 
           <div>
-            
+
           </div>
 
 
@@ -369,7 +369,7 @@ export default function AddEntry() {
 
         </div>
       </div>
-      
+
 
 
     </>

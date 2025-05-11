@@ -57,31 +57,40 @@ export default function MainTimeScrub() {
       {year: useDate.year, month:useDate.month, day:useDate.day}
     ), 'day')
 
-    function adjustDate(adjustment: "increment" | "decrement") {
-      setDate((prevDate) => {
-        // Create a Luxon DateTime object from the current state
-        const currentDate = DateTime.fromObject({
-          year: prevDate.year,
-          month: prevDate.month,
-          day: prevDate.day,
+    function adjustDate(adjustment: "increment" | "decrement" | "today") {
+      if (adjustment === 'today') {
+        setDate({
+          year: DateTime.now().year,
+          month: DateTime.now().month,
+          monthString: DateTime.now().monthLong ?? "Unknown",
+          day: DateTime.now().day,
+        })
+      } else {
+        setDate((prevDate) => {
+          // Create a Luxon DateTime object from the current state
+          const currentDate = DateTime.fromObject({
+            year: prevDate.year,
+            month: prevDate.month,
+            day: prevDate.day,
+          });
+
+          // Adjust the date based on the adjustment parameter
+          const newDate =
+            adjustment === "increment"
+              ? currentDate.plus({ days: 1 })
+              : adjustment === "decrement"
+              ? currentDate.minus({ days: 1 })
+              : currentDate;
+
+          // Return the updated state
+          return {
+            year: newDate.year,
+            month: newDate.month,
+            monthString: newDate.monthLong ?? 'unknown',
+            day: newDate.day,
+          };
         });
-
-        // Adjust the date based on the adjustment parameter
-        const newDate =
-          adjustment === "increment"
-            ? currentDate.plus({ days: 1 })
-            : adjustment === "decrement"
-            ? currentDate.minus({ days: 1 })
-            : currentDate;
-
-        // Return the updated state
-        return {
-          year: newDate.year,
-          month: newDate.month,
-          monthString: newDate.monthLong ?? 'unknown',
-          day: newDate.day,
-        };
-      });
+      }
     }
 
     const queryParam = `${useDate.year}-${String(useDate.month).padStart(2, "0")}-${String(useDate.day).padStart(2, "0")}`
@@ -172,6 +181,9 @@ export default function MainTimeScrub() {
                     </div>
                 </div>
             </div>
+
+
+
             <div className=" w-full overflow-y-scroll relative overflow-x-hidden hidescrollbar flex flex-col  z-[60]"
                 style={{
                     height: `${maxHeight}vh`
@@ -220,6 +232,12 @@ export default function MainTimeScrub() {
                         }
                     `}
                 </style>
+            </div>
+
+
+
+            <div onClick={() => adjustDate('today')} className="flex flex-row justify-end bg-zinc-950 sticky bottom-0 px-2 pt-2 w-full hover:text-amber-500 cursor-pointer">
+                <p className="text-center">Go to Today</p>
             </div>
         </>
     )
