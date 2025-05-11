@@ -16,6 +16,7 @@ import MainModal from "../MainUIs/MainModal";
 import { Preahvihear } from "next/font/google";
 import MainTimeScrub from "../MainUIs/MainTimeScrub";
 import Entries from "./Entries";
+import { Settings } from "lucide-react";
 
 
 
@@ -24,6 +25,8 @@ export default function Main() {
   const { cache, mutate } = useSWRConfig()
 
   const serverEntries = cache.get("/api/entry")
+  localStorage.setItem('defaultDuration', '0')
+  localStorage.setItem('defaultRest', '0')
 
   // LOCALSTORAGE
   const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
@@ -31,10 +34,10 @@ export default function Main() {
 
   const [beginFocus, setBeginFocus] = useState(false)
   const [startCount, setStartCount] = useState(false)
-  const [initDuration, setInitDuration] = useState(25)
+  const [initDuration, setInitDuration] = useState(Number(localStorage.getItem('defaultDuration'))>0 ? Number(localStorage.getItem('defaultDuration')) : 25)
 
-  const [useDuration, setDuration] = useState(25)
-  const [useRestDuration, setRestDuration] = useState(10)
+  const [useDuration, setDuration] = useState(initDuration)
+  const [useRestDuration, setRestDuration] = useState(Number(localStorage.getItem('defaultRest'))>0 ? Number(localStorage.getItem('defaultRest')) : 10)
   const [useDeadline, setDeadline] = useState('')
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
@@ -50,6 +53,7 @@ export default function Main() {
   const [useFocusJournal, setFocusJournal] = useState('')
 
   const modalRef = useRef(null)
+  const settingsRef = useRef(null)
   const [useLoadingPosting, setLoadingPosting] = useState(false)
 
   useEffect(() => {
@@ -280,11 +284,51 @@ export default function Main() {
         <div className="w-3/4 grow px-6 py-6 border-[1px] rounded-md bg-gray-900 flex flex-col justify-between">
           <div className="flex flex-row gap-4 h-2 my-6">
             {[...Array(useSessionAmt)].map((item, index) => (
-              <div key={index} className="min-h-full w-1/5" style={{
+              <div key={index} className="min-h-full w-1/5 " style={{
                 backgroundColor: index < useSessionIndex ? 'var(--color-amber-400)' : 'white'
               }}>
               </div>
             ))}
+            <div className="flex flex-row items-center">
+              <MainModal ref={settingsRef} id='settings-modal' title='Default Settings' triggerText="Defaults">
+                <div className="flex flex-col gap-10 my-12">
+                  <div className="flex flex-col gap-2">
+                    <div>
+                      <p className="text-xl">Default Work Duration: { useDuration } Minutes</p>
+                    </div>
+                    <MainTimeSlider
+                        useColor='var(--color-gray-500)'
+                        useValue={useDuration}
+                        onChangeCallback={(e) => {
+                          setDuration(e)
+                          localStorage.setItem('defaultDuration', String(e))
+                        }}
+                        />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div>
+                      <p className="text-xl">Default Rest Duration: { useRestDuration } Minutes</p>
+                    </div>
+                    <MainTimeSlider
+                        useColor='var(--color-gray-500)'
+                        useValue={useRestDuration}
+                        onChangeCallback={(e) => {
+                          setRestDuration(e)
+                          localStorage.setItem('defaultRest', String(e))
+                        }}
+                        />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div>
+                      <p className="text-xl">Default Number of Sessions: { useSessionAmt }</p>
+                    </div>
+                    <div>
+                      <MainInputText label="Default" onChangeHandler={setSessionAmt}/>
+                    </div>
+                  </div>
+                </div>
+              </MainModal>
+            </div>
           </div>
 
 
@@ -304,9 +348,12 @@ export default function Main() {
           </div>
 
           <div className="">
+            <div className="flex flex-row p-2 mb-12 justify-between">
+              <p className="text-8xl font-black leading-20 overflow-hidden text-ellipsis"><span style={{color: useRest ? 'var(--color-green-400)' : 'var(--color-amber-400)'}}>{ useRest ? 'Rest for ' : 'Work for ' }</span><br></br>{ useDuration } Minutes </p>
+            </div>
             <MainTimeSlider
-              useRest={useRest}
-              useDuration={useDuration}
+              useColor={useRest ? 'var(--color-green-400)' : 'var(--color-amber-400)'}
+              useValue={useDuration}
               onChangeCallback={setDuration}
             />
           </div>
@@ -317,9 +364,12 @@ export default function Main() {
               <MainButton onClickHandler={startFocusHandler} buttonType="default">
                   START FOCUS
               </MainButton>
-              <MainButton onClickHandler={cleanFocusHandler} buttonType="bordered">
-                  CLEAR FOCUS
-              </MainButton>
+              {
+                beginFocus &&
+                <MainButton onClickHandler={cleanFocusHandler} buttonType="bordered">
+                    CLEAR FOCUS
+                </MainButton>
+              }
             </div>
             {
               beginFocus && (
@@ -332,7 +382,7 @@ export default function Main() {
                       <div className="flex flex-row">
                         {
                           !useLoadingPosting && (
-                            <div className="grow">
+                            <div className="w-xs">
                               <MainButton
                                 onClickHandler={recordFocusHandler} buttonType="default">
                                   POST

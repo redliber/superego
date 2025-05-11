@@ -1,34 +1,22 @@
 import React, { useEffect, useState } from "react"
 
-export default function MainTimeSlider({onChangeCallback, useDuration, useRest}: {onChangeCallback: (value: number) => void, useDuration: number, useRest: boolean}) {
-  const [generalColor, setGeneralColor] = useState('var(--color-green-400)')
+export default function MainTimeSlider({onChangeCallback, useValue, useColor='var(--color-green-400)'}: {onChangeCallback: (value: number) => void, useValue: number, useColor: string}) {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(event.target.value)
     onChangeCallback(newValue)
   }
 
-  const percentage = ((useDuration - 5) / (60 - 5)) * 100;
-
-  useEffect(() => {
-    if (useRest) {
-      setGeneralColor('var(--color-green-400)')
-    } else {
-      setGeneralColor('var(--color-amber-400)')
-    }
-  }, [useRest])
+  const percentage = ((useValue - 5) / (60 - 5)) * 100;
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-row p-2 mb-12 justify-between">
-        <p className="text-8xl font-black leading-20 overflow-hidden text-ellipsis"><span style={{color: generalColor}}>{ useRest ? 'Rest for ' : 'Work for ' }</span><br></br>{ useDuration } Minutes </p>
-      </div>
       <input
         type="range"
         min={5}
         max={60}
         step={1}
-        value={useDuration}
+        value={useValue}
         onChange={handleChange}
         className="rounded-sm bg-transparent border-2 p-2 appearance-none"
         style={{
@@ -67,7 +55,7 @@ export default function MainTimeSlider({onChangeCallback, useDuration, useRest}:
           height: 100%;
           background: linear-gradient(
             to right,
-            ${generalColor} ${percentage}%,
+            ${useColor} ${percentage}%,
             var(--color-zinc-100) ${percentage}%
           ); /* Dynamic track fill */
           border-radius: 4px;
@@ -77,7 +65,7 @@ export default function MainTimeSlider({onChangeCallback, useDuration, useRest}:
           height: 4px;
           background: linear-gradient(
             to right,
-            ${generalColor} ${percentage}%,
+            ${useColor} ${percentage}%,
             var(--color-zinc-100) ${percentage}%
           );
           border-radius: 4px;

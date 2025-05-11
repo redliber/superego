@@ -196,7 +196,7 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
         <>
             {/* TOP SECTION */}
             <div>
-                <div className="flex flex-row justify-between align-top items-start bg-gray-900 sticky z-50 top-0 px-2 pb-2 w-full "
+                <div className="flex flex-row justify-between align-top items-start bg-gray-900 sticky z-50 top-0 px-2 pb-2 w-full text-xs "
                     style={{
                         // height: `${HEADER_HEIGHT}px`
                     }}
@@ -205,7 +205,14 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
                         <p>{`←`}</p>
                     </div>
                     <div>
-                        <p> {useDate.monthString} {useDate.day} {useDate.year}</p>
+                      {
+                        checkIfCurrentDay &&
+                        <p className="text-amber-200"> {useDate.monthString} {useDate.day} {useDate.year}</p>
+                      }
+                      {
+                        !checkIfCurrentDay &&
+                        <p className=""> {useDate.monthString} {useDate.day} {useDate.year}</p>
+                      }
                         {/* <p> {JSON.stringify(useSessions)} </p>
                         <p> {JSON.stringify(useDate)} </p>
                         <p> {queryParam} </p> */}
@@ -263,21 +270,25 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
 
 
                 {/* Tentative Blocks */}
-                <div className="flex flex-col justify-center absolute w-full"
-                  style={{
-                      top: `${useCurrent}px`
-                  }}
-                >
-                  <div className="w-2/3 place-self-end">
-                    {
-                      tentativeArray.map(({duration, type}, index) => {
-                        return (
-                          <TentativeBlock key={index} duration={duration} type={ type }/>
-                        )
-                      })
-                    }
+                {
+                  checkIfCurrentDay &&
+                  <div className="flex flex-col justify-center absolute w-full "
+                    style={{
+                        top: `${useCurrent}px`
+                    }}
+                  >
+                    <div className="w-2/3 place-self-end rounded-b-sm overflow-clip">
+                      {
+                        tentativeArray.map(({duration, type}, index) => {
+                          return (
+                            <TentativeBlock key={index} duration={duration} type={ type }/>
+                          )
+                        })
+                      }
+                    </div>
                   </div>
-                </div>
+
+                }
 
 
 
@@ -297,8 +308,8 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
 
 
             {/* BOTTOM SECTION */}
-            <div id="scroll-to-today" onClick={scrollToToday} className="flex flex-row justify-end bg-gray-900 sticky bottom-0 px-2 pt-2 w-full hover:text-amber-500 cursor-pointer">
-                <p className="text-center">Go to Now</p>
+            <div id="scroll-to-today" onClick={scrollToToday} className="flex flex-row justify-end bg-gray-900 sticky bottom-0 px-2 pt-2 w-full hover:text-amber-300 transition-all duration-150 cursor-pointer">
+                <p className="text-center text-xs">Go to Now</p>
             </div>
         </>
     )
@@ -349,16 +360,16 @@ function TimeBlock({time}: {time:number}) {
 }
 
 function TentativeBlock({duration, type} : {duration: number, type:string}) {
-  const colors = type === "work" ? ' bg-amber-400 hover:bg-amber-300 ' : ' bg-green-400 hover:bg-green-300 '
+  const colors = type === "work" ? ' bg-amber-300/50 hover:bg-amber-500 ' : ' bg-green-300/50 hover:bg-green-500 '
   const height = duration / 60 * BLOCK_HEIGHT
   return (
     <div
-      className={` w-full opacity-50 hover:opacity-75 p-1 text-sm` + colors}
+      className={` w-full p-1 text-xs transition-all duration-150 ease-in-out ` + colors}
       style={{
         height: `${height}px`
       }}
     >
-        <p className="text-black font-bold leading-4">{String(type).toUpperCase()} for { duration } Minutes</p>
+        <p className="text-gray-700 font-bold leading-4">{String(type).toWellFormed()} for { duration } Minutes</p>
     </div>
   )
 }

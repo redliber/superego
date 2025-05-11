@@ -84,14 +84,15 @@ export default function MainModal ({ id, title, children, triggerText = 'Open Mo
             {triggerText}
       </MainButton>
       <div
-        className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 
+        className={`fixed inset-0 z-[9999] flex items-center justify-center
+            bg-gray-900/75 bg-blend-color-dodge backdrop-blur-lg
             transition-all duration-300
             data-[state=closed]:transition-all data-[state=closed]:duration-300
             data-[state=open]:transition-all data-[state=open]:duration-300
             ${
-          isClosing ? 
-            `data-[state=closed]:opacity-0 
-            data-[state=closed]:transition-all data-[state=closed]:duration-300` : 
+          isClosing ?
+            `data-[state=closed]:opacity-0
+            data-[state=closed]:transition-all data-[state=closed]:duration-300` :
             `data-[state=open]:opacity-100
             data-[state=open]:transition-all data-[state=open]:duration-300`
         }`}
@@ -104,7 +105,7 @@ export default function MainModal ({ id, title, children, triggerText = 'Open Mo
       >
         <div
           ref={modalRef}
-          className={`rounded-sm border-2 shadow-lg max-w-2xl w-full p-6 transform transition-all duration-300 ${
+          className={`rounded-sm border-2 bg-gray-900 shadow-2xl shadow-gray-700 max-w-2xl w-full p-6 transform transition-all duration-300 ${
             isClosing ? 'data-[state=closed]:scale-95' : 'data-[state=open]:scale-100'
           }`}
           data-modal="content"
@@ -113,7 +114,7 @@ export default function MainModal ({ id, title, children, triggerText = 'Open Mo
           onKeyDown={handleTabKey}
         >
           <div className="flex justify-between items-center mb-4">
-            <h2 id={`${id}-title`} className="text-6xl font-semibold text-green-400">
+            <h2 id={`${id}-title`} className="text-4xl font-semibold text-green-400">
               {title}
             </h2>
             {dismissible && (

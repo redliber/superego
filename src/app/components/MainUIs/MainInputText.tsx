@@ -6,14 +6,14 @@ export default function MainInputText({label='Insert Text Here', onChangeHandler
   const [useTextArea, setTextArea] = useState(label)
 
   useEffect(() => {
-    
+
 
   })
 
   if (type == 'input') {
     return (
       <input
-        className="text-2xl rounded-xs border-[1px] border-zinc-100 p-3 my-2 w-full"
+        className="text-2xl placeholder:text-lg hover:font-black transition-all duration-150 ease-in-out rounded-xs border-[1px] border-zinc-100 p-3 my-2 w-full"
         placeholder={ label }
         onChange={onChangeHandler}></input>
     )
@@ -22,10 +22,10 @@ export default function MainInputText({label='Insert Text Here', onChangeHandler
       <textarea
         ref={textAreaRef}
         className="
-          placeholder:text-4xl text-xl focus:placeholder:text-xl 
-          rounded-xs border-[1px] border-zinc-100 
-          p-3 my-2 w-full resize-none 
-          transition-all placeholder:transition-all 
+          placeholder:text-xl text-xl focus:placeholder:text-xl
+          rounded-xs border-[1px] border-zinc-100
+          p-3 my-2 w-full resize-none
+          transition-all placeholder:transition-all
           duration-300"
         rows={5} cols={33}
         placeholder={label}
