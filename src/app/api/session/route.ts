@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const reqTime:string[] = searchParams.get('sessionTime')!.split('-')
-    
+
     const queryKeys = Array.from(searchParams.keys()).map((item) => {
       return {[item]: searchParams.get(item)}
     })
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     //   }
     //   return output;
     // }
-    
+
     // const mergedObject = queryKeys.reduce((acc, curr) => deepMerge(acc, curr), {});
 
     const sessionShape = {
@@ -56,6 +56,7 @@ export async function GET(request: Request) {
 
       return NextResponse.json(result, { status: 200 });
     } else if (reqTime) {
+      console.log(`ROUTE session reached, requesting Time for ==> `, reqTime)
       const query = `
         select Session {
           id,
@@ -67,12 +68,14 @@ export async function GET(request: Request) {
           and std::datetime_get(.sessionTime, 'month') = <int64>$month
           and std::datetime_get(.sessionTime, 'day') = <int64>$day;
         `;
-    
+
       const result = await client.query(query, {
         year: Number(reqTime[0]),
         month: Number(reqTime[1]),
         day: Number(reqTime[2]),
       });
+
+      console.log(`Result reached ==> `, result)
 
       return NextResponse.json(result, { status: 200 });
     } else {

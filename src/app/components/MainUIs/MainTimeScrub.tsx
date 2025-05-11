@@ -2,7 +2,7 @@
 
 import { fitRange } from "@/app/lib/utils"
 import { DateTime, Duration } from "luxon"
-import { useEffect, useState } from "react"
+import { SetStateAction, useEffect, useState } from "react"
 import { useTime, useTimer } from "react-timer-hook"
 import useSWR, { useSWRConfig } from "swr"
 import type { SessionObject, EntryObject } from "@/app/lib/types"
@@ -28,41 +28,89 @@ function fitTime (time:number) {
 }
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+interface SelectedDate {
+  year: number,
+  month: number,
+  monthString: string,
+  day: number
+}
+
+// ==========================================================================================
+// ==========================================================================================
+//                                  MAIN REACT EXPORT
+// ==========================================================================================
+// ==========================================================================================
+
 export default function MainTimeScrub() {
     const { cache, mutate } = useSWRConfig()
     const serverEntries = cache.get("/api/entry")
-    
+
     const dateNow = DateTime.now()
-    const [useDate, setDate] = useState({
+    const [useDate, setDate] = useState<SelectedDate>({
         year: DateTime.now().year,
         month: DateTime.now().month,
-        monthString: DateTime.now().monthLong,
+        monthString: DateTime.now().monthLong ?? "Unknown",
         day: DateTime.now().day,
     })
-    
-    const { data:sessionData, isLoading:loadingSession } = useSWR(`/api/session?sessionTime=${useDate.year}-${useDate.month}-${useDate.day}`, fetcher)
+
+    const checkIfCurrentDay = dateNow.hasSame(DateTime.fromObject(
+      {year: useDate.year, month:useDate.month, day:useDate.day}
+    ), 'day')
+
+    function adjustDate(adjustment: "increment" | "decrement") {
+      setDate((prevDate) => {
+        // Create a Luxon DateTime object from the current state
+        const currentDate = DateTime.fromObject({
+          year: prevDate.year,
+          month: prevDate.month,
+          day: prevDate.day,
+        });
+
+        // Adjust the date based on the adjustment parameter
+        const newDate =
+          adjustment === "increment"
+            ? currentDate.plus({ days: 1 })
+            : adjustment === "decrement"
+            ? currentDate.minus({ days: 1 })
+            : currentDate;
+
+        // Return the updated state
+        return {
+          year: newDate.year,
+          month: newDate.month,
+          monthString: newDate.monthLong ?? 'unknown',
+          day: newDate.day,
+        };
+      });
+    }
+
+    const queryParam = `${useDate.year}-${String(useDate.month).padStart(2, "0")}-${String(useDate.day).padStart(2, "0")}`
+
+    const { data:sessionData, isLoading:loadingSession } = useSWR(`/api/session?sessionTime=${queryParam}`, fetcher)
+    // const { data:sessionData, isLoading:loadingSession } = useSWR(`/api/session?sessionTime=${useDate.year}-${useDate.month}-${useDate.day}`, fetcher)
     const [useSessions, setSessions] = useState([])
 
     useEffect(() => {
-        if (!loadingSession) {
-            const sessionsArr = sessionData.map((item:SessionObject) => {
-                const startTime = DateTime.fromISO(String(item.sessionTime), { zone: 'utc' })
-                const startHour = startTime.hour.toString().padStart(2, '0')
-                const startMinute = startTime.minute.toString().padStart(2, '0')
-                const startTimeObject = `${startHour}:${startMinute}`
+      if (sessionData) {
+        const sessionsArr:any = sessionData!.map((item:SessionObject) => {
+          const startTime = DateTime.fromISO(String(item.sessionTime), { zone: 'utc' })
+          const startHour = startTime.hour.toString().padStart(2, '0')
+          const startMinute = startTime.minute.toString().padStart(2, '0')
+          const startTimeObject = `${startHour}:${startMinute}`
 
-                const duration = startTime.plus(Duration.fromISO(item.sessionDuration))
-                const endHour = duration.hour.toString().padStart(2, '0')
-                const endMinute = duration.minute.toString().padStart(2, '0')
-                const endTimeObject = `${endHour}:${endMinute}`
+          const duration = startTime.plus(Duration.fromISO(item.sessionDuration))
+          const endHour = duration.hour.toString().padStart(2, '0')
+          const endMinute = duration.minute.toString().padStart(2, '0')
+          const endTimeObject = `${endHour}:${endMinute}`
 
-                console.log({start: startTimeObject, end: endTimeObject, type: item.sessionType});
+          console.log({start: startTimeObject, end: endTimeObject, type: item.sessionType});
 
-                return {start: startTimeObject, end: endTimeObject, type: item.sessionType}
-            })
-            setSessions(sessionsArr)
-        }
-    } , [loadingSession])
+          return {start: startTimeObject, end: endTimeObject, type: item.sessionType}
+        })
+        setSessions(sessionsArr)
+      }
+      // The array to check is both useDate and loadingSession.
+    } , [useDate, loadingSession])
 
     useEffect(() => {
         if (serverEntries?.data) {
@@ -78,7 +126,7 @@ export default function MainTimeScrub() {
             })
             // console.log(`selectedDayEntries`, selectedDayEntries);
         }
-    
+
     }, [serverEntries])
 
 
@@ -101,23 +149,25 @@ export default function MainTimeScrub() {
 
 
 
-    
+
     return (
         <>
             <div>
-                <div className="flex flex-row justify-between align-top items-start bg-zinc-950 sticky z-50 top-0 px-2 pb-2 w-full " 
+                <div className="flex flex-row justify-between align-top items-start bg-zinc-950 sticky z-50 top-0 px-2 pb-2 w-full "
                     style={{
                         // height: `${HEADER_HEIGHT}px`
                     }}
                 >
-                    <div>
+                    <div className="cursor-pointer hover:text-amber-200 active:text-amber-500" onClick={() => adjustDate('decrement')}>
                         <p>{`←`}</p>
                     </div>
                     <div>
                         <p> {useDate.monthString} {useDate.day} {useDate.year}</p>
-                        {/* <p> {JSON.stringify(useSessions)} </p> */}
+                        {/* <p> {JSON.stringify(useSessions)} </p>
+                        <p> {JSON.stringify(useDate)} </p>
+                        <p> {queryParam} </p> */}
                     </div>
-                    <div>
+                    <div className="cursor-pointer hover:text-amber-200 active:text-amber-500" onClick={() => adjustDate('increment')}>
                         <p>{`→`}</p>
                     </div>
                 </div>
@@ -130,12 +180,16 @@ export default function MainTimeScrub() {
                 {/* <p>{JSON.stringify(serverEntries?.data)}</p> */}
                 {/* <p>{JSON.stringify(useDate)}</p> */}
 
-                
-                <div id="needlepin" className="min-h-0.5 bg-amber-50 absolute z-40 w-full place-self-end place-items-end "
-                    style={{
-                        top: `${useCurrent}px`
-                    }}
-                ></div>
+                {
+                  checkIfCurrentDay &&
+                  <div id="needlepin" className="min-h-0.5 bg-amber-50 absolute z-40 w-full place-self-end place-items-end "
+                      style={{
+                          top: `${useCurrent}px`
+                      }}
+                  ></div>
+                }
+
+
 
                 {
                     useSessions && useSessions.map((item: any, index) => {
@@ -189,7 +243,7 @@ function EventBlock({start, end, type} : {start:string, end:string, type?:string
             style={{
                 top: `${startTime}px`,
                 height: `${height}px`,
-                // background: type ==='work' ? 'var(--color-amber-500)' : 'var(--color-green-500)' 
+                // background: type ==='work' ? 'var(--color-amber-500)' : 'var(--color-green-500)'
             }}
         >
             <p className=" ">{start} - {end}</p>
