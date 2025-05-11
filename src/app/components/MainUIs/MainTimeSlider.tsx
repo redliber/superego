@@ -7,7 +7,7 @@ export default function MainTimeSlider({onChangeCallback, useDuration, useRest}:
     const newValue = Number(event.target.value)
     onChangeCallback(newValue)
   }
-  
+
   const percentage = ((useDuration - 5) / (60 - 5)) * 100;
 
   useEffect(() => {
@@ -19,9 +19,9 @@ export default function MainTimeSlider({onChangeCallback, useDuration, useRest}:
   }, [useRest])
 
   return (
-    <div className="flex flex-col my-12">
+    <div className="flex flex-col">
       <div className="flex flex-row p-2 mb-12 justify-between">
-        <p className="text-9xl font-black leading-28 overflow-hidden text-ellipsis"><span style={{color: generalColor}}>{ useRest ? 'Rest for ' : 'Work for ' }</span><br></br>{ useDuration } Minutes </p>
+        <p className="text-8xl font-black leading-20 overflow-hidden text-ellipsis"><span style={{color: generalColor}}>{ useRest ? 'Rest for ' : 'Work for ' }</span><br></br>{ useDuration } Minutes </p>
       </div>
       <input
         type="range"

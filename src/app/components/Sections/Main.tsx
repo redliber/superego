@@ -15,11 +15,12 @@ import useSWR, {useSWRConfig} from 'swr';
 import MainModal from "../MainUIs/MainModal";
 import { Preahvihear } from "next/font/google";
 import MainTimeScrub from "../MainUIs/MainTimeScrub";
+import Entries from "./Entries";
 
 
 
 
-export default function AddEntry() {
+export default function Main() {
   const { cache, mutate } = useSWRConfig()
 
   const serverEntries = cache.get("/api/entry")
@@ -33,6 +34,7 @@ export default function AddEntry() {
   const [initDuration, setInitDuration] = useState(25)
 
   const [useDuration, setDuration] = useState(25)
+  const [useRestDuration, setRestDuration] = useState(10)
   const [useDeadline, setDeadline] = useState('')
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
@@ -95,8 +97,8 @@ export default function AddEntry() {
           setSessionIndex(useSessionIndex + 1)
         }
         setStartCount(false)
-        setTime(10)
-        setDuration(10)
+        setTime(useRestDuration)
+        setDuration(useRestDuration)
         setRest(true)
       } else if (useRest) {
         setStartCount(false)
@@ -266,65 +268,52 @@ export default function AddEntry() {
       </div> */}
 
 
-
-      <div className="flex flex-row gap-4 h-2 my-6">
-        {[...Array(useSessionAmt)].map((item, index) => (
-          <div key={index} className="min-h-full w-1/5" style={{
-            backgroundColor: index < useSessionIndex ? 'var(--color-amber-400)' : 'white'
-          }}>
-          </div>
-        ))}
-      </div>
-
-
-
-      <div className="min-h-24 min-w-full">
-        {
-          beginFocus && (
-            <div>
-              <p className="text-4xl font-black" id="focus-title">{useFocusTitle}</p>
-            </div>
-          )
-        }
-        {
-          !beginFocus && (
-            <MainInputText onChangeHandler={onTitleChangeHandler} label="Task to focus on"/>
-          )
-        }
-      </div>
-
-
-      <div className="flex flex-row gap-10">
-
-
-
-        <div className="flex-1 w-full flex flex-col border-[1px] p-3 rounded-md">
+      <div className="flex flex-row gap-6">
+        <div className="w-1/4 border-[1px] p-3 rounded-md bg-gray-900">
           <MainTimeScrub
-
+            workDuration={useDuration}
+            restDuration={useRestDuration}
+            sessionAmount={useSessionAmt}
           />
         </div>
 
-
-
-        <div className="flex-4">
-
-          <div>
-
+        <div className="w-3/4 grow px-6 py-6 border-[1px] rounded-md bg-gray-900 flex flex-col justify-between">
+          <div className="flex flex-row gap-4 h-2 my-6">
+            {[...Array(useSessionAmt)].map((item, index) => (
+              <div key={index} className="min-h-full w-1/5" style={{
+                backgroundColor: index < useSessionIndex ? 'var(--color-amber-400)' : 'white'
+              }}>
+              </div>
+            ))}
           </div>
 
 
+          <div className="min-h-24 min-w-full">
+            {
+              beginFocus && (
+                <div>
+                  <p className="text-4xl font-black" id="focus-title">{useFocusTitle}</p>
+                </div>
+              )
+            }
+            {
+              !beginFocus && (
+                <MainInputText onChangeHandler={onTitleChangeHandler} label="Task to focus on"/>
+              )
+            }
+          </div>
 
-
-          <MainTimeSlider
-            useRest={useRest}
-            useDuration={useDuration}
-            onChangeCallback={setDuration}
-          />
-
+          <div className="">
+            <MainTimeSlider
+              useRest={useRest}
+              useDuration={useDuration}
+              onChangeCallback={setDuration}
+            />
+          </div>
 
 
           <div className="flex flex-row justify-between">
-            <div className="flex flex-row gap-10">
+            <div className="flex flex-row gap-6">
               <MainButton onClickHandler={startFocusHandler} buttonType="default">
                   START FOCUS
               </MainButton>
@@ -364,9 +353,10 @@ export default function AddEntry() {
               )
             }
           </div>
+        </div>
 
-
-
+        <div className="w-1/4 pb-3 border-[1px] rounded-md bg-gray-900">
+          <Entries/>
         </div>
       </div>
 

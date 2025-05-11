@@ -35,13 +35,19 @@ interface SelectedDate {
   day: number
 }
 
+interface MainTimeScrubArgument {
+  workDuration: number,
+  restDuration: number,
+  sessionAmount: number
+}
+
 // ==========================================================================================
 // ==========================================================================================
 //                                  MAIN REACT EXPORT
 // ==========================================================================================
 // ==========================================================================================
 
-export default function MainTimeScrub() {
+export default function MainTimeScrub({workDuration, restDuration, sessionAmount}: MainTimeScrubArgument) {
     const { cache, mutate } = useSWRConfig()
     const serverEntries = cache.get("/api/entry")
 
@@ -153,6 +159,7 @@ export default function MainTimeScrub() {
     }, [serverEntries])
 
 
+    // Setting Current Position of the Needlepin
     const {
         milliseconds,
         seconds,
@@ -161,9 +168,7 @@ export default function MainTimeScrub() {
       } = useTime();
 
     const [useCurrent, setCurrent] = useState<number>(0)
-
     const maxHeight = 60
-
     useEffect(() => {
         const current = hours + minutes/60
         const fitted = fitTime(current)
@@ -171,12 +176,27 @@ export default function MainTimeScrub() {
     }, [minutes, hours, seconds])
 
 
+    // TENTATIVE TIME BLOCKS ARRAY
+    const tentativeArray = [...Array(sessionAmount).keys()].map((item, index) => {
+      if (index % 2 == 0) {
+        return {
+          type: 'work',
+          duration: workDuration
+        }
+      } else {
+        return {
+          type: 'break',
+          duration: restDuration
+        }
+      }
+    })
 
 
     return (
         <>
+            {/* TOP SECTION */}
             <div>
-                <div className="flex flex-row justify-between align-top items-start bg-zinc-950 sticky z-50 top-0 px-2 pb-2 w-full "
+                <div className="flex flex-row justify-between align-top items-start bg-gray-900 sticky z-50 top-0 px-2 pb-2 w-full "
                     style={{
                         // height: `${HEADER_HEIGHT}px`
                     }}
@@ -197,7 +217,7 @@ export default function MainTimeScrub() {
             </div>
 
 
-
+            {/* MAIN SECTION */}
             <div
                 ref={scrollContainerRef}
                 className=" w-full overflow-y-scroll relative overflow-x-hidden hidescrollbar flex flex-col  z-[60]"
@@ -242,6 +262,26 @@ export default function MainTimeScrub() {
                 </div>
 
 
+                {/* Tentative Blocks */}
+                <div className="flex flex-col justify-center absolute w-full"
+                  style={{
+                      top: `${useCurrent}px`
+                  }}
+                >
+                  <div className="w-2/3 place-self-end">
+                    {
+                      tentativeArray.map(({duration, type}, index) => {
+                        return (
+                          <TentativeBlock key={index} duration={duration} type={ type }/>
+                        )
+                      })
+                    }
+                  </div>
+                </div>
+
+
+
+
                 {/* Hiding Scrollbar */}
                 <style jsx>
                     {`
@@ -256,8 +296,8 @@ export default function MainTimeScrub() {
             </div>
 
 
-
-            <div id="scroll-to-today" onClick={scrollToToday} className="flex flex-row justify-end bg-zinc-950 sticky bottom-0 px-2 pt-2 w-full hover:text-amber-500 cursor-pointer">
+            {/* BOTTOM SECTION */}
+            <div id="scroll-to-today" onClick={scrollToToday} className="flex flex-row justify-end bg-gray-900 sticky bottom-0 px-2 pt-2 w-full hover:text-amber-500 cursor-pointer">
                 <p className="text-center">Go to Now</p>
             </div>
         </>
@@ -277,12 +317,11 @@ function EventBlock({start, end, type} : {start:string, end:string, type?:string
 
     const colors = type === "work" ? ' bg-amber-500 hover:bg-amber-300 ' : ' bg-green-500 hover:bg-green-300 '
     return (
-        <div className={`absolute w-[90%] px-1 text-black z-30  transition-all duration-200 place-self-end` + colors
-        }
+        <div
+            className={`absolute w-[90%] px-1 text-black z-30  transition-all duration-200 place-self-end` + colors}
             style={{
                 top: `${startTime}px`,
                 height: `${height}px`,
-                // background: type ==='work' ? 'var(--color-amber-500)' : 'var(--color-green-500)'
             }}
         >
             <p className=" ">{start} - {end}</p>
@@ -298,13 +337,28 @@ function TimeBlock({time}: {time:number}) {
                 height: `${BLOCK_HEIGHT}px`
             }}
         >
-            <div className="w-[10%] px-2 text-right ">
+            <div className="w-[10%] pr-2 ">
                 <p>{time}</p>
             </div>
-            <div className="w-[90%] bg-zinc-900 border-l-[0.1px] border-l-amber-100/50">
+            <div className="w-[90%] bg-gray-800 border-l-[0.1px] border-l-amber-100/50">
 
             </div>
 
         </div>
     )
+}
+
+function TentativeBlock({duration, type} : {duration: number, type:string}) {
+  const colors = type === "work" ? ' bg-amber-400 hover:bg-amber-300 ' : ' bg-green-400 hover:bg-green-300 '
+  const height = duration / 60 * BLOCK_HEIGHT
+  return (
+    <div
+      className={` w-full opacity-50 hover:opacity-75 p-1 text-sm` + colors}
+      style={{
+        height: `${height}px`
+      }}
+    >
+        <p className="text-black font-bold leading-4">{String(type).toUpperCase()} for { duration } Minutes</p>
+    </div>
+  )
 }

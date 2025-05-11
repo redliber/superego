@@ -33,7 +33,7 @@ export default function Entries() {
   }, [ ])
 
   return (
-    <div className="w-full px-10 py-20 flex flex-row">
+    <div className="w-full px-10 py-20 flex flex-col">
       <div className="w-full text-2xl font-bold flex flex-col gap-20 overflow-y-scroll max-h-[50vh]">
         { data &&
           data.map((entry:any) => (
