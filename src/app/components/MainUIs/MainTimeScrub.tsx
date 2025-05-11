@@ -2,7 +2,7 @@
 
 import { fitRange } from "@/app/lib/utils"
 import { DateTime, Duration } from "luxon"
-import { SetStateAction, useEffect, useState } from "react"
+import { SetStateAction, useEffect, useRef, useState } from "react"
 import { useTime, useTimer } from "react-timer-hook"
 import useSWR, { useSWRConfig } from "swr"
 import type { SessionObject, EntryObject } from "@/app/lib/types"
@@ -21,7 +21,7 @@ for(let i = TIME_START; i <= TIME_END; i++) {
 }
 
 const BLOCK_HEIGHT = 200
-const TRUE_TIMEBLOCKS_HEIGHT = BLOCK_HEIGHT*timeArray.length
+const TRUE_TIMEBLOCKS_HEIGHT = BLOCK_HEIGHT * timeArray.length
 
 function fitTime (time:number) {
     return Number(fitRange(time, TIME_START, TIME_END + 1, 0, 1)) * TRUE_TIMEBLOCKS_HEIGHT
@@ -93,10 +93,23 @@ export default function MainTimeScrub() {
       }
     }
 
-    const queryParam = `${useDate.year}-${String(useDate.month).padStart(2, "0")}-${String(useDate.day).padStart(2, "0")}`
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
+    function scrollToToday () {
+      adjustDate('today')
+      setTimeout(() => {
+          if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollTo({
+                  top: useCurrent - (maxHeight * window.innerHeight) / 200, // Center needlepin
+                  behavior: "smooth",
+              })
+          }
+      }, 0)
+    }
 
+    // Fetching sessionData from the api route and assigning each events into the useSessions state.
+
+    const queryParam = `${useDate.year}-${String(useDate.month).padStart(2, "0")}-${String(useDate.day).padStart(2, "0")}`
     const { data:sessionData, isLoading:loadingSession } = useSWR(`/api/session?sessionTime=${queryParam}`, fetcher)
-    // const { data:sessionData, isLoading:loadingSession } = useSWR(`/api/session?sessionTime=${useDate.year}-${useDate.month}-${useDate.day}`, fetcher)
     const [useSessions, setSessions] = useState([])
 
     useEffect(() => {
@@ -120,6 +133,7 @@ export default function MainTimeScrub() {
       }
       // The array to check is both useDate and loadingSession.
     } , [useDate, loadingSession])
+
 
     useEffect(() => {
         if (serverEntries?.data) {
@@ -184,7 +198,9 @@ export default function MainTimeScrub() {
 
 
 
-            <div className=" w-full overflow-y-scroll relative overflow-x-hidden hidescrollbar flex flex-col  z-[60]"
+            <div
+                ref={scrollContainerRef}
+                className=" w-full overflow-y-scroll relative overflow-x-hidden hidescrollbar flex flex-col  z-[60]"
                 style={{
                     height: `${maxHeight}vh`
                 }}
@@ -192,6 +208,8 @@ export default function MainTimeScrub() {
                 {/* <p>{JSON.stringify(serverEntries?.data)}</p> */}
                 {/* <p>{JSON.stringify(useDate)}</p> */}
 
+
+                {/* Needle Pin */}
                 {
                   checkIfCurrentDay &&
                   <div id="needlepin" className="min-h-0.5 bg-amber-50 absolute z-40 w-full place-self-end place-items-end "
@@ -202,7 +220,7 @@ export default function MainTimeScrub() {
                 }
 
 
-
+                {/* Event Blocks, if available */}
                 {
                     useSessions && useSessions.map((item: any, index) => {
                         return (
@@ -212,6 +230,7 @@ export default function MainTimeScrub() {
                 }
 
 
+                {/* Time Blocks, Background */}
                 <div className="-z-50">
                     {
                         timeArray.map((item, index) => {
@@ -222,6 +241,8 @@ export default function MainTimeScrub() {
                     }
                 </div>
 
+
+                {/* Hiding Scrollbar */}
                 <style jsx>
                     {`
                         .hidescrollbar {
@@ -236,8 +257,8 @@ export default function MainTimeScrub() {
 
 
 
-            <div onClick={() => adjustDate('today')} className="flex flex-row justify-end bg-zinc-950 sticky bottom-0 px-2 pt-2 w-full hover:text-amber-500 cursor-pointer">
-                <p className="text-center">Go to Today</p>
+            <div id="scroll-to-today" onClick={scrollToToday} className="flex flex-row justify-end bg-zinc-950 sticky bottom-0 px-2 pt-2 w-full hover:text-amber-500 cursor-pointer">
+                <p className="text-center">Go to Now</p>
             </div>
         </>
     )
