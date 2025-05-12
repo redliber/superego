@@ -34,7 +34,7 @@ export default function Entries() {
 
   return (
     <div className="w-full px-10 py-20 flex flex-col">
-      <div className="w-full text-2xl font-bold flex flex-col gap-20 overflow-y-scroll max-h-[50vh]">
+      <div className="w-full text-2xl font-bold flex flex-col gap-20 hidescrollbar overflow-y-scroll max-h-[50vh]">
         { data &&
           data.map((entry:any) => (
             <div key={entry.id} className="">
@@ -67,13 +67,24 @@ export default function Entries() {
           ))
         }
       </div>
-      <div className="w-full font-thin font-mono text-sm overflow-y-scroll max-h-[50vh]">
+      <div className="w-full font-thin font-mono text-sm overflow-y-scroll hidescrollbar max-h-[50vh]">
         <pre className="wrap">
           {
             JSON.stringify(data, null, 2)
           }
         </pre>
       </div>
+      {/* Hiding Scrollbar */}
+    <style jsx>
+        {`
+            .hidescrollbar {
+                scrollbar-width: none;
+            }
+            .hidescrollbar::-webkit-scrollbar {
+                display: none;
+            }
+        `}
+    </style>
     </div>
   )
 }

@@ -25,8 +25,6 @@ export default function Main() {
   const { cache, mutate } = useSWRConfig()
 
   const serverEntries = cache.get("/api/entry")
-  localStorage.setItem('defaultDuration', '0')
-  localStorage.setItem('defaultRest', '0')
 
   // LOCALSTORAGE
   const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
@@ -34,10 +32,10 @@ export default function Main() {
 
   const [beginFocus, setBeginFocus] = useState(false)
   const [startCount, setStartCount] = useState(false)
-  const [initDuration, setInitDuration] = useState(Number(localStorage.getItem('defaultDuration'))>0 ? Number(localStorage.getItem('defaultDuration')) : 25)
+  const [initDuration, setInitDuration] = useState<number>(25)
 
   const [useDuration, setDuration] = useState(initDuration)
-  const [useRestDuration, setRestDuration] = useState(Number(localStorage.getItem('defaultRest'))>0 ? Number(localStorage.getItem('defaultRest')) : 10)
+  const [useRestDuration, setRestDuration] = useState<number>(10)
   const [useDeadline, setDeadline] = useState('')
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
@@ -45,6 +43,7 @@ export default function Main() {
 
   // SESSION TRACKING
   const [useSessionAmt, setSessionAmt] = useState(5)
+  const [useSessionsLocalArray, setSessionsLocalArray] = useState<number[]>([])
   const [useSessionIndex, setSessionIndex] = useState(0)
   const [useRest, setRest] = useState(false)
 
@@ -55,6 +54,17 @@ export default function Main() {
   const modalRef = useRef(null)
   const settingsRef = useRef(null)
   const [useLoadingPosting, setLoadingPosting] = useState(false)
+
+  useEffect(() => {
+    setInitDuration(Number(localStorage.getItem('defaultDuration'))>0 ? Number(localStorage.getItem('defaultDuration')) : 25)
+    setRestDuration(Number(localStorage.getItem('defaultRest'))>0 ? Number(localStorage.getItem('defaultRest')) : 10)
+  }, [])
+
+  useEffect(() => {
+    const n = Math.max(1, Math.floor(useSessionAmt > 0 ? useSessionAmt : 1));
+    const arr = Array.from({ length: n }, () => 0); 
+    setSessionsLocalArray(arr);
+  }, [useSessionAmt])
 
   useEffect(() => {
     if (beginFocus) {
@@ -112,6 +122,13 @@ export default function Main() {
       }
     }
   })
+
+  // Logic for Finishing Session
+  useEffect(() => {
+    if (Number(useSessionIndex) === Number(useSessionAmt)) {
+      console.log('FINISHED SESSION')
+    }
+  }, [useSessionIndex])
 
   // Logic for Default Durations and Beginning Focus for the First Time
   useEffect(() => {
@@ -253,7 +270,7 @@ export default function Main() {
 
 
 
-      {/* <div className="flex flex-wrap mb-10 font-thin text-sm">
+      <div className="flex flex-wrap mb-10 font-thin text-sm">
         <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p>
         <p>Deadline  <span className="px-10 font-black">{useDeadline}</span> || &emsp;&emsp;</p>
         <p>Time  <span className="px-10 font-black">{String(useTime)}</span> || &emsp;&emsp;</p>
@@ -265,11 +282,7 @@ export default function Main() {
         <p>Begin Focus  <span className="px-10 font-black">{String(beginFocus)}</span> || &emsp;&emsp;</p>
         <p>Start Count  <span className="px-10 font-black">{String(startCount)}</span> || &emsp;&emsp;</p>
         <p>Entry Object  <span className="px-10 font-black overflow-hidden text-ellipsis">{String(JSON.stringify(useEntryObject))}</span> || &emsp;&emsp;</p>
-      </div> */}
-
-      {/* <div>
-        <p>{JSON.stringify(serverEntries?.data)}</p>
-      </div> */}
+      </div>
 
 
       <div className="flex flex-row gap-6">
@@ -277,16 +290,21 @@ export default function Main() {
           <MainTimeScrub
             workDuration={useDuration}
             restDuration={useRestDuration}
-            sessionAmount={useSessionAmt}
+            sessionAmount={Number(useSessionAmt)}
           />
         </div>
 
         <div className="w-3/4 grow px-6 py-6 border-[1px] rounded-md bg-gray-900 flex flex-col justify-between">
           <div className="flex flex-row gap-4 h-2 my-6">
-            {[...Array(useSessionAmt)].map((item, index) => (
-              <div key={index} className="min-h-full w-1/5 " style={{
-                backgroundColor: index < useSessionIndex ? 'var(--color-amber-400)' : 'white'
-              }}>
+            {useSessionsLocalArray.map((item, index) => (
+              <div key={index} 
+                className={`min-h-full transition-all duration-500 ease-in-out ` 
+                  + `${startCount && index == useSessionIndex ? ` animate-undulate ` : ` `}`
+                } 
+                style={{
+                  width: `calc(1/${useSessionAmt} * 100%)` ,
+                  backgroundColor: index < useSessionIndex ? 'var(--color-amber-400)' : (index === useSessionIndex && useRest) ? 'var(--color-green-400)' : (index === useSessionIndex && !useRest) ? 'var(--color-amber-200)' : 'white'
+                }}>
               </div>
             ))}
             <div className="flex flex-row items-center">
@@ -323,7 +341,7 @@ export default function Main() {
                       <p className="text-xl">Default Number of Sessions: { useSessionAmt }</p>
                     </div>
                     <div>
-                      <MainInputText label="Default" onChangeHandler={setSessionAmt}/>
+                      <MainInputText label="Default" onChangeHandler={(e) => {setSessionAmt(e.target.value)}}/>
                     </div>
                   </div>
                 </div>
@@ -349,7 +367,17 @@ export default function Main() {
 
           <div className="">
             <div className="flex flex-row p-2 mb-12 justify-between">
-              <p className="text-8xl font-black leading-20 overflow-hidden text-ellipsis"><span style={{color: useRest ? 'var(--color-green-400)' : 'var(--color-amber-400)'}}>{ useRest ? 'Rest for ' : 'Work for ' }</span><br></br>{ useDuration } Minutes </p>
+              <p className={`text-8xl cursor-default select-none font-black leading-20 overflow-hidden text-ellipsis transition-all duration-100 ease-in-out`}>
+                <span 
+                  className={
+                    useRest ? 
+                    ` text-green-400 text-shadow-green-200 hover:text-green-200 ` : 
+                    ` text-amber-400 text-shadow-amber-200 hover:text-amber-200 ` 
+                    + ` text-shadow-sm hover:text-shadow-md transition-all duration-200 ease-in-out `
+                  }
+                >
+                      { useRest ? 'Rest for ' : 'Work for ' }
+                    </span><br></br>{ useDuration } Minutes </p>
             </div>
             <MainTimeSlider
               useColor={useRest ? 'var(--color-green-400)' : 'var(--color-amber-400)'}

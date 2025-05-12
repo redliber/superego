@@ -28,3 +28,16 @@ body {
 .font-gothic {
     font-family: var(--font-gothic);
 }
+
+@theme {
+  --animate-undulate: undulate-text 2s ease-in-out infinite;
+
+  @keyframes undulate-text {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+}

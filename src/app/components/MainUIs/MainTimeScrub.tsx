@@ -105,12 +105,16 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
       setTimeout(() => {
           if (scrollContainerRef.current) {
               scrollContainerRef.current.scrollTo({
-                  top: useCurrent - (maxHeight * window.innerHeight) / 200, // Center needlepin
+                  top: useCurrent - (maxHeight * window.innerHeight) / 400, // Center needlepin
                   behavior: "smooth",
               })
           }
       }, 0)
     }
+
+
+
+
 
     // Fetching sessionData from the api route and assigning each events into the useSessions state.
 
@@ -177,7 +181,7 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
 
 
     // TENTATIVE TIME BLOCKS ARRAY
-    const tentativeArray = [...Array(sessionAmount).keys()].map((item, index) => {
+    const tentativeArray = [...Array(sessionAmount * 2).keys()].map((item, index) => {
       if (index % 2 == 0) {
         return {
           type: 'work',
@@ -360,16 +364,16 @@ function TimeBlock({time}: {time:number}) {
 }
 
 function TentativeBlock({duration, type} : {duration: number, type:string}) {
-  const colors = type === "work" ? ' bg-amber-300/50 hover:bg-amber-500 ' : ' bg-green-300/50 hover:bg-green-500 '
+  const colors = type === "work" ? ' bg-amber-300/25 hover:bg-amber-500 ' : ' bg-green-300/25 hover:bg-green-500 '
   const height = duration / 60 * BLOCK_HEIGHT
   return (
     <div
-      className={` w-full p-1 text-xs transition-all duration-150 ease-in-out ` + colors}
+      className={` w-full px-1 text-xs transition-all duration-150 ease-in-out ` + colors}
       style={{
         height: `${height}px`
       }}
     >
-        <p className="text-gray-700 font-bold leading-4">{String(type).toWellFormed()} for { duration } Minutes</p>
+        {/* <p className="text-gray-700 font-bold leading-4">{String(type).toWellFormed()} for { duration } Minutes</p> */}
     </div>
   )
 }
