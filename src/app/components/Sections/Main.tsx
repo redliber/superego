@@ -41,7 +41,7 @@ export default function Main() {
     return 25; // Default value for server-side rendering
   });
 
-  const [useRestDuration, setRestDuration] = useState<number>(() => {
+  const [initRestDuration, setInitRestDuration] = useState<number>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('defaultRest');
       return stored && !isNaN(Number(stored)) ? Number(stored) : 10;
@@ -51,6 +51,8 @@ export default function Main() {
   
   
   const [useDuration, setDuration] = useState(initDuration)
+  const [useRestDuration, setRestDuration] = useState(initRestDuration)
+
   const [useDeadline, setDeadline] = useState('')
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
@@ -70,13 +72,6 @@ export default function Main() {
   const settingsRef = useRef(null)
   const [useLoadingPosting, setLoadingPosting] = useState(false)
 
-  // useEffect(() => {
-  //   console.log('Reached here ==> ', Number(localStorage.getItem('defaultDuration')))
-  //   setInitDuration(Number(localStorage.getItem('defaultDuration')))
-  //   setRestDuration(Number(localStorage.getItem('defaultRest')))
-
-  //   console.log(`initDuration ${initDuration}`);
-  // }, [])
 
   useEffect(() => {
     const n = Math.max(1, Math.floor(useSessionAmt > 0 ? useSessionAmt : 1));
@@ -112,34 +107,32 @@ export default function Main() {
 
       if (!Number.isNaN(useTime)) {
         setDifference(useTime)
-        setDuration(useTime)
+        useRest ? setRestDuration(useTime) : setDuration(useTime)
       }
 
       return () => clearInterval(interval)
     } else {
-      setTime(useDuration)
+      setTime(useRest ? useRestDuration : useDuration)
     }
-  }, [startCount, useDuration, useTime])
+  }, [startCount, useDuration, useTime, useRestDuration])
 
   // Logic for Finishing a Session
   useEffect(() => {
-    if (useTime == 0) {
+    if (useTime === 0) {
       if (!useRest) {
-        if (startCount) {
-          setSessionIndex(useSessionIndex + 1)
-        }
-        setStartCount(false)
-        setTime(useRestDuration)
-        setDuration(useRestDuration)
-        setRest(true)
-      } else if (useRest) {
+        if (startCount) setSessionIndex(prev => prev + 1)
         setStartCount(false)
         setTime(initDuration)
-        setDuration(initDuration)
+        setDuration(useDuration)
+        setRest(true)
+    } else {
+        setStartCount(false)
+        setTime(initRestDuration)
+        setDuration(initRestDuration)
         setRest(false)
       }
     }
-  })
+  }, [useTime, useRest, startCount])
 
   // Logic for Finishing Session
   useEffect(() => {
@@ -163,12 +156,12 @@ export default function Main() {
 
   function startFocusHandler () {
     setStartCount(true)
-    setDeadline(addInterval(new Date().toISOString(), `PT${useDuration}S`)) // Use M instead of S when finished with debugging
+    setDeadline(addInterval(new Date().toISOString(), `PT${useRest ? useRestDuration : useDuration}S`)) // Use M instead of S when finished with debugging
 
     const currentSession : SessionObject = {
       sessionIndex: useSessionIndex,
       sessionTime: parseTimeZoneBeforePOST(DateTime.now().toISO()),
-      sessionDuration: String(useDuration),
+      sessionDuration: String(useRest ? useRestDuration : useDuration),
       sessionType: useRest ? 'break' : 'work',
     }
 
@@ -288,7 +281,7 @@ export default function Main() {
 
 
 
-      {/* <div className="flex flex-wrap mb-10 font-thin text-sm">
+      <div className="flex flex-wrap mb-10 font-thin text-sm">
         <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p>
         <p>Deadline  <span className="px-10 font-black">{useDeadline}</span> || &emsp;&emsp;</p>
         <p>Time  <span className="px-10 font-black">{String(useTime)}</span> || &emsp;&emsp;</p>
@@ -300,7 +293,7 @@ export default function Main() {
         <p>Begin Focus  <span className="px-10 font-black">{String(beginFocus)}</span> || &emsp;&emsp;</p>
         <p>Start Count  <span className="px-10 font-black">{String(startCount)}</span> || &emsp;&emsp;</p>
         <p>Entry Object  <span className="px-10 font-black overflow-hidden text-ellipsis">{String(JSON.stringify(useEntryObject))}</span> || &emsp;&emsp;</p>
-      </div> */}
+      </div>
 
 
       <div className="flex flex-row gap-6">
@@ -311,7 +304,7 @@ export default function Main() {
             sessionAmount={Number(useSessionAmt)}
             sessionIndex={useSessionIndex}
             startCount={startCount}
-
+            beginFocus={beginFocus}
           />
         </div>
 
@@ -402,12 +395,12 @@ export default function Main() {
                   }
                 >
                       { useRest ? 'Rest for ' : 'Work for ' }
-                    </span><br></br>{ useDuration } Minutes </p>
+                    </span><br></br>{ useRest ? useRestDuration : useDuration } Minutes </p>
             </div>
             <MainTimeSlider
               useColor={useRest ? 'var(--color-green-400)' : 'var(--color-amber-400)'}
-              useValue={useDuration}
-              onChangeCallback={setDuration}
+              useValue={useRest ? useRestDuration : useDuration}
+              onChangeCallback={(e) => useRest ? setRestDuration(e) : setDuration(e)}
             />
           </div>
 

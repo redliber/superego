@@ -40,7 +40,8 @@ interface MainTimeScrubArgument {
   restDuration: number,
   sessionAmount: number,
   sessionIndex: number,
-  startCount: boolean
+  startCount: boolean,
+  beginFocus: boolean
 }
 
 // ==========================================================================================
@@ -49,7 +50,7 @@ interface MainTimeScrubArgument {
 // ==========================================================================================
 // ==========================================================================================
 
-export default function MainTimeScrub({workDuration, restDuration, sessionAmount, sessionIndex, startCount}: MainTimeScrubArgument) {
+export default function MainTimeScrub({workDuration, restDuration, sessionAmount, sessionIndex, startCount, beginFocus}: MainTimeScrubArgument) {
     const { cache, mutate } = useSWRConfig()
     const serverEntries = cache.get("/api/entry")
 
@@ -288,6 +289,7 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
                       sessionIndex={sessionIndex}
                       tentativeArray={tentativeArray}
                       useCurrent={useCurrent}
+                      beginFocus={beginFocus}
                       />
                   </div>
 
@@ -362,31 +364,40 @@ function TimeBlock({time}: {time:number}) {
     )
 }
 
-function TentativeArea({tentativeArray, useCurrent, sessionIndex, startCount} : {tentativeArray:any[], useCurrent:number,  sessionIndex:number, startCount:boolean}) {
-  const [useTopPos, setTopPos] = useState(useCurrent)
+function TentativeArea({tentativeArray, useCurrent, sessionIndex, startCount, beginFocus} : {tentativeArray:any[], useCurrent:number,  sessionIndex:number, startCount:boolean, beginFocus:boolean}) {
+  const [useTopPos, setTopPos] = useState<number>(0)
 
   useEffect(() => {
-    if (startCount) {
+    if (beginFocus) {
       setTopPos(useCurrent)
     }
-  }, [startCount])
+  }, [beginFocus])
+
+  // console.log(`useTopPos -> ${typeof useCurrent}`);
 
   return (
     <div className=" flex flex-col justify-center absolute w-full overflow-hidden "
       style={{
           // height: `${maxHeight}vh`,
-          top: `${startCount || sessionIndex > 0 ? useTopPos : useCurrent}px`
+          top: `${beginFocus ? useTopPos : useCurrent}px`
       }}
       >
-        <div className="w-2/3 place-self-end rounded-b-sm overflow-clip h-full"
+        <div className= " w-3/4 place-self-end rounded-b-sm overflow-clip h-full "
         >
           {
             tentativeArray.map(({duration, type}, index) => {
               return (
-                <TentativeBlock
-                  sessionIndex={sessionIndex}
-                  startCount={startCount}
-                  key={index} duration={duration} type={ type }/>
+                  <TentativeBlock
+                    key={index}
+                    currentIndex={index}
+                    parentPos={useTopPos}
+                    sessionIndex={sessionIndex}
+                    needlePinPos={useCurrent}
+                    startCount={startCount}
+                    duration={duration}
+                    type={ type }
+                    beginFocus={beginFocus}
+                    />
               )
             })
           }
@@ -395,17 +406,42 @@ function TentativeArea({tentativeArray, useCurrent, sessionIndex, startCount} : 
   )
 }
 
-function TentativeBlock({duration, type, sessionIndex, startCount} : {duration: number, type:string, sessionIndex:number, startCount:boolean}) {
+function TentativeBlock({duration, type, sessionIndex, currentIndex, startCount, needlePinPos, parentPos, beginFocus} : {duration: number, type:string, sessionIndex:number, currentIndex:number, startCount:boolean, needlePinPos:number, parentPos:number, beginFocus:boolean}) {
+  const tentativeBlockRef = useRef<HTMLDivElement>(null)
+
   const colors = type === "work" ? ' bg-amber-300/25 hover:bg-amber-500 ' : ' bg-green-300/25 hover:bg-green-500 '
   const height = duration / 60 * BLOCK_HEIGHT
+  
+  const offsetTop = tentativeBlockRef.current?.offsetTop 
+  const absoluteTop = tentativeBlockRef.current?.getBoundingClientRect()
+  
+  const [useTop, setTop] = useState<string>(`auto`)
+  const [useHeight, setHeight] = useState<number>(height)
+
+  useEffect(() => {
+    if (startCount) setHeight(prev => prev)
+    else {
+      if (currentIndex === sessionIndex) setHeight(height)
+    }
+  }, [startCount, sessionIndex, duration])
+
   return (
     <div
+      ref={tentativeBlockRef}
       className={` w-full px-1 text-xs transition-all duration-150 ease-in-out ` + colors}
       style={{
-        height: `${height}px`
+        height: `${useHeight}px`,
+        top: useTop
       }}
     >
-      <p>{sessionIndex} - {String(startCount)}</p>
+      <p>StartCount : {String(startCount)}</p>
+      <p>BeginFocus: {String(beginFocus)}</p>
+      <p>OffsetTop : { offsetTop }</p>
+      <p>NeedlePinPos : { needlePinPos }</p>
+      <p>AbsoluteTop : {JSON.stringify(absoluteTop?.y)}</p>
+      <p>ParentPos : {parentPos}</p>
+      <p>Indices : { currentIndex} {sessionIndex}</p>
+      <p>Height : {useHeight}</p>
         {/* <p className="text-gray-700 font-bold leading-4">{String(type).toWellFormed()} for { duration } Minutes</p> */}
     </div>
   )
