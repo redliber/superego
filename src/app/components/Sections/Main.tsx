@@ -34,14 +34,21 @@ export default function Main() {
   const [startCount, setStartCount] = useState(false)
 
   const [initDuration, setInitDuration] = useState<number>(() => {
-    const stored = localStorage.getItem('defaultDuration');
-    return stored && !isNaN(Number(stored)) ? Number(stored) : 25;
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('defaultDuration');
+      return stored && !isNaN(Number(stored)) ? Number(stored) : 25;
+    }
+    return 25; // Default value for server-side rendering
+  });
+
+  const [useRestDuration, setRestDuration] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('defaultRest');
+      return stored && !isNaN(Number(stored)) ? Number(stored) : 10;
+    }
+    return 10; // Default value for server-side rendering
   });
   
-  const [useRestDuration, setRestDuration] = useState<number>(() => {
-    const stored = localStorage.getItem('defaultRest');
-    return stored && !isNaN(Number(stored)) ? Number(stored) : 10;
-  })
   
   const [useDuration, setDuration] = useState(initDuration)
   const [useDeadline, setDeadline] = useState('')
