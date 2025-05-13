@@ -32,10 +32,18 @@ export default function Main() {
 
   const [beginFocus, setBeginFocus] = useState(false)
   const [startCount, setStartCount] = useState(false)
-  const [initDuration, setInitDuration] = useState<number>(25)
 
+  const [initDuration, setInitDuration] = useState<number>(() => {
+    const stored = localStorage.getItem('defaultDuration');
+    return stored && !isNaN(Number(stored)) ? Number(stored) : 25;
+  });
+  
+  const [useRestDuration, setRestDuration] = useState<number>(() => {
+    const stored = localStorage.getItem('defaultRest');
+    return stored && !isNaN(Number(stored)) ? Number(stored) : 10;
+  })
+  
   const [useDuration, setDuration] = useState(initDuration)
-  const [useRestDuration, setRestDuration] = useState<number>(10)
   const [useDeadline, setDeadline] = useState('')
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
@@ -55,10 +63,13 @@ export default function Main() {
   const settingsRef = useRef(null)
   const [useLoadingPosting, setLoadingPosting] = useState(false)
 
-  useEffect(() => {
-    setInitDuration(Number(localStorage.getItem('defaultDuration'))>0 ? Number(localStorage.getItem('defaultDuration')) : 25)
-    setRestDuration(Number(localStorage.getItem('defaultRest'))>0 ? Number(localStorage.getItem('defaultRest')) : 10)
-  }, [])
+  // useEffect(() => {
+  //   console.log('Reached here ==> ', Number(localStorage.getItem('defaultDuration')))
+  //   setInitDuration(Number(localStorage.getItem('defaultDuration')))
+  //   setRestDuration(Number(localStorage.getItem('defaultRest')))
+
+  //   console.log(`initDuration ${initDuration}`);
+  // }, [])
 
   useEffect(() => {
     const n = Math.max(1, Math.floor(useSessionAmt > 0 ? useSessionAmt : 1));
@@ -270,7 +281,7 @@ export default function Main() {
 
 
 
-      <div className="flex flex-wrap mb-10 font-thin text-sm">
+      {/* <div className="flex flex-wrap mb-10 font-thin text-sm">
         <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p>
         <p>Deadline  <span className="px-10 font-black">{useDeadline}</span> || &emsp;&emsp;</p>
         <p>Time  <span className="px-10 font-black">{String(useTime)}</span> || &emsp;&emsp;</p>
@@ -282,7 +293,7 @@ export default function Main() {
         <p>Begin Focus  <span className="px-10 font-black">{String(beginFocus)}</span> || &emsp;&emsp;</p>
         <p>Start Count  <span className="px-10 font-black">{String(startCount)}</span> || &emsp;&emsp;</p>
         <p>Entry Object  <span className="px-10 font-black overflow-hidden text-ellipsis">{String(JSON.stringify(useEntryObject))}</span> || &emsp;&emsp;</p>
-      </div>
+      </div> */}
 
 
       <div className="flex flex-row gap-6">
@@ -291,6 +302,9 @@ export default function Main() {
             workDuration={useDuration}
             restDuration={useRestDuration}
             sessionAmount={Number(useSessionAmt)}
+            sessionIndex={useSessionIndex}
+            startCount={startCount}
+
           />
         </div>
 
@@ -341,7 +355,11 @@ export default function Main() {
                       <p className="text-xl">Default Number of Sessions: { useSessionAmt }</p>
                     </div>
                     <div>
-                      <MainInputText label="Default" onChangeHandler={(e) => {setSessionAmt(e.target.value)}}/>
+                      <MainInputText 
+                        label="Default" 
+                        onChangeHandler={(e) => {
+                        setSessionAmt(e.target.value)}
+                        }/>
                     </div>
                   </div>
                 </div>

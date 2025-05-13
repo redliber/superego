@@ -12,7 +12,7 @@ const PLACEHOLDERDATA = [
     {start: `15:00`, end: `16:00`},
 ]
 
-const TIME_START = 5
+const TIME_START = 0
 const TIME_END = 24
 const timeArray:number[] = []
 
@@ -20,7 +20,7 @@ for(let i = TIME_START; i <= TIME_END; i++) {
     timeArray.push(i)
 }
 
-const BLOCK_HEIGHT = 200
+const BLOCK_HEIGHT = 1000
 const TRUE_TIMEBLOCKS_HEIGHT = BLOCK_HEIGHT * timeArray.length
 
 function fitTime (time:number) {
@@ -38,7 +38,9 @@ interface SelectedDate {
 interface MainTimeScrubArgument {
   workDuration: number,
   restDuration: number,
-  sessionAmount: number
+  sessionAmount: number,
+  sessionIndex: number,
+  startCount: boolean
 }
 
 // ==========================================================================================
@@ -47,7 +49,7 @@ interface MainTimeScrubArgument {
 // ==========================================================================================
 // ==========================================================================================
 
-export default function MainTimeScrub({workDuration, restDuration, sessionAmount}: MainTimeScrubArgument) {
+export default function MainTimeScrub({workDuration, restDuration, sessionAmount, sessionIndex, startCount}: MainTimeScrubArgument) {
     const { cache, mutate } = useSWRConfig()
     const serverEntries = cache.get("/api/entry")
 
@@ -276,20 +278,17 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
                 {/* Tentative Blocks */}
                 {
                   checkIfCurrentDay &&
-                  <div className="flex flex-col justify-center absolute w-full "
+                  <div id="tentative-outer" className=" w-full absolute top-0 overflow-hidden "
                     style={{
-                        top: `${useCurrent}px`
+                        height: `${TRUE_TIMEBLOCKS_HEIGHT}px`,
                     }}
                   >
-                    <div className="w-2/3 place-self-end rounded-b-sm overflow-clip">
-                      {
-                        tentativeArray.map(({duration, type}, index) => {
-                          return (
-                            <TentativeBlock key={index} duration={duration} type={ type }/>
-                          )
-                        })
-                      }
-                    </div>
+                    <TentativeArea
+                      startCount={startCount}
+                      sessionIndex={sessionIndex}
+                      tentativeArray={tentativeArray}
+                      useCurrent={useCurrent}
+                      />
                   </div>
 
                 }
@@ -363,7 +362,40 @@ function TimeBlock({time}: {time:number}) {
     )
 }
 
-function TentativeBlock({duration, type} : {duration: number, type:string}) {
+function TentativeArea({tentativeArray, useCurrent, sessionIndex, startCount} : {tentativeArray:any[], useCurrent:number,  sessionIndex:number, startCount:boolean}) {
+  const [useTopPos, setTopPos] = useState(useCurrent)
+
+  useEffect(() => {
+    if (startCount) {
+      setTopPos(useCurrent)
+    }
+  }, [startCount])
+
+  return (
+    <div className=" flex flex-col justify-center absolute w-full overflow-hidden "
+      style={{
+          // height: `${maxHeight}vh`,
+          top: `${startCount || sessionIndex > 0 ? useTopPos : useCurrent}px`
+      }}
+      >
+        <div className="w-2/3 place-self-end rounded-b-sm overflow-clip h-full"
+        >
+          {
+            tentativeArray.map(({duration, type}, index) => {
+              return (
+                <TentativeBlock
+                  sessionIndex={sessionIndex}
+                  startCount={startCount}
+                  key={index} duration={duration} type={ type }/>
+              )
+            })
+          }
+        </div>
+    </div>
+  )
+}
+
+function TentativeBlock({duration, type, sessionIndex, startCount} : {duration: number, type:string, sessionIndex:number, startCount:boolean}) {
   const colors = type === "work" ? ' bg-amber-300/25 hover:bg-amber-500 ' : ' bg-green-300/25 hover:bg-green-500 '
   const height = duration / 60 * BLOCK_HEIGHT
   return (
@@ -373,6 +405,7 @@ function TentativeBlock({duration, type} : {duration: number, type:string}) {
         height: `${height}px`
       }}
     >
+      <p>{sessionIndex} - {String(startCount)}</p>
         {/* <p className="text-gray-700 font-bold leading-4">{String(type).toWellFormed()} for { duration } Minutes</p> */}
     </div>
   )
