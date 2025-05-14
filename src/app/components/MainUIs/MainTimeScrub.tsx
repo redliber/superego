@@ -41,7 +41,8 @@ interface MainTimeScrubArgument {
   sessionAmount: number,
   sessionIndex: number,
   startCount: boolean,
-  beginFocus: boolean
+  beginFocus: boolean,
+  localSessionsArray: {}[]
 }
 
 // ==========================================================================================
@@ -50,7 +51,7 @@ interface MainTimeScrubArgument {
 // ==========================================================================================
 // ==========================================================================================
 
-export default function MainTimeScrub({workDuration, restDuration, sessionAmount, sessionIndex, startCount, beginFocus}: MainTimeScrubArgument) {
+export default function MainTimeScrub({workDuration, restDuration, sessionAmount, sessionIndex, startCount, beginFocus, localSessionsArray}: MainTimeScrubArgument) {
     const { cache, mutate } = useSWRConfig()
     const serverEntries = cache.get("/api/entry")
 
@@ -198,9 +199,40 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
       }
     })
 
+    const [useDebug, setDebug] = useState(false)
+
 
     return (
         <>
+            <div className="fixed top-0 right-0 p-4 h-[65vh] w-xl  hidescrollbar flex flex-col gap-4 overflow-hidden">
+              <div className="cursor-pointer hover:font-black" onClick={() => setDebug(!useDebug)}>MainTimeScrub Debug</div>
+              {
+                useDebug && (
+
+                    <div className=" bg-gray-600 p-4flex flex-col h-[65vh] overflow-y-scroll p-6 ">
+                      <div className="flex flex-col my-4 border-[1px] p-3">
+                        <div className="flex flex-row justify-between">
+                          <p className="font-black">workDuration</p><p>{workDuration}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p className="font-black">restDuration</p><p>{restDuration}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-row gap-2 my-4 border-[1px] p-3">
+                        <div className="flex flex-col w-1/2 border-r-[1px] p-1">
+                          <p className="font-black">tentativeArray</p><pre>{JSON.stringify(tentativeArray, null, 1)}</pre>
+                        </div>
+                        <div className="flex flex-col w-1/2 p-1">
+                          <p className="font-black">localSessionsArray</p><pre>{JSON.stringify(localSessionsArray, null, 1)}</pre>
+                        </div>
+                      </div>
+                    </div>
+
+                )
+              }
+
+
+            </div>
             {/* TOP SECTION */}
             <div>
                 <div className="flex flex-row justify-between align-top items-start bg-gray-900 sticky z-50 top-0 px-2 pb-2 w-full text-xs "

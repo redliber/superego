@@ -60,7 +60,7 @@ export default function Main() {
 
   // SESSION TRACKING
   const [useSessionAmt, setSessionAmt] = useState(5)
-  const [useSessionsLocalArray, setSessionsLocalArray] = useState<number[]>([])
+  const [useSessionsLocalArray, setSessionsLocalArray] = useState<{}[]>([])
   const [useSessionIndex, setSessionIndex] = useState(0)
   const [useRest, setRest] = useState(false)
 
@@ -72,12 +72,49 @@ export default function Main() {
   const settingsRef = useRef(null)
   const [useLoadingPosting, setLoadingPosting] = useState(false)
 
-
+  // PLANNING SESSIONS
   useEffect(() => {
     const n = Math.max(1, Math.floor(useSessionAmt > 0 ? useSessionAmt : 1));
-    const arr = Array.from({ length: n }, () => 0); 
+    const arr = Array.from({ length: n }, () => 0).map((item, index) => {
+
+      const durationLookUp = (typeLookUp:string):number => {
+        const findSessionIndexFromLocalStorage = useSessionsArray.find((item) => 
+          item.sessionType === typeLookUp && item.sessionIndex === index
+        )
+
+        if (useSessionIndex === index) {
+          if (!startCount) {
+            return typeLookUp === 'work' ? useDuration : useRestDuration
+          } else {
+            return Number(findSessionIndexFromLocalStorage?.sessionDuration)
+          }
+        } else if (useSessionIndex < index) {
+          return typeLookUp === 'work' ? initDuration : initRestDuration
+        } else {
+          return Number(findSessionIndexFromLocalStorage?.sessionDuration)
+        }
+      }
+
+      const workObject = {
+        sessionIndex: index,
+        sessionType: 'work',
+        sessionDuration: durationLookUp('work')
+      }
+
+      const restObject = {
+        sessionIndex: index,
+        sessionType: 'break',
+        sessionDuration: durationLookUp('break')
+      }
+
+      const sessionArr = []
+      if (index > 0) sessionArr.push(restObject)
+      sessionArr.push(workObject)
+
+      return sessionArr
+    })
     setSessionsLocalArray(arr);
-  }, [useSessionAmt])
+  }, [useSessionAmt, useSessionIndex, useRestDuration, useDuration])
 
   useEffect(() => {
     if (beginFocus) {
@@ -123,7 +160,7 @@ export default function Main() {
         if (startCount) setSessionIndex(prev => prev + 1)
         setStartCount(false)
         setTime(initDuration)
-        setDuration(useDuration)
+        setDuration(initDuration)
         setRest(true)
     } else {
         setStartCount(false)
@@ -133,13 +170,6 @@ export default function Main() {
       }
     }
   }, [useTime, useRest, startCount])
-
-  // Logic for Finishing Session
-  useEffect(() => {
-    if (Number(useSessionIndex) === Number(useSessionAmt)) {
-      console.log('FINISHED SESSION')
-    }
-  }, [useSessionIndex])
 
   // Logic for Default Durations and Beginning Focus for the First Time
   useEffect(() => {
@@ -276,23 +306,88 @@ export default function Main() {
     }
   }
 
+  const [useDebug, setDebug] = useState(false)
+
+
   return (
     <>
 
 
+      {/* DEBUGGING AREA */}
+      <div className="fixed top-0 right-[40rem] p-4 h-[65vh] w-xl flex flex-col gap-4 ">
+        <div className="cursor-pointer hover:font-black" onClick={() => setDebug(!useDebug)}>MainPage Debug</div>
+                {
+                  useDebug && (
+                    <div className="flex flex-col mb-10 font-thin text-sm bg-gray-600 p-6 overflow-y-scroll">
 
-      <div className="flex flex-wrap mb-10 font-thin text-sm">
-        <p>Current Time  <span className="px-10 font-black">{DateTime.now().toLocaleString()}</span> || &emsp;&emsp;</p>
-        <p>Deadline  <span className="px-10 font-black">{useDeadline}</span> || &emsp;&emsp;</p>
-        <p>Time  <span className="px-10 font-black">{String(useTime)}</span> || &emsp;&emsp;</p>
-        <p>Difference  <span className="px-10 font-black">{useDifference}</span> || &emsp;&emsp;</p>
-        <p>Duration  <span className="px-10 font-black">{useDuration}</span> || &emsp;&emsp;</p>
-        <p>Session Index  <span className="px-10 font-black">{useSessionIndex}</span> || &emsp;&emsp;</p>
-        <p>Session Type  <span className="px-10 font-black">{useRest ? 'Rest' : 'Work'}</span> || &emsp;&emsp;</p>
-        <p>Duration Default  <span className="px-10 font-black">{initDuration}</span> || &emsp;&emsp;</p>
-        <p>Begin Focus  <span className="px-10 font-black">{String(beginFocus)}</span> || &emsp;&emsp;</p>
-        <p>Start Count  <span className="px-10 font-black">{String(startCount)}</span> || &emsp;&emsp;</p>
-        <p>Entry Object  <span className="px-10 font-black overflow-hidden text-ellipsis">{String(JSON.stringify(useEntryObject))}</span> || &emsp;&emsp;</p>
+                      <div className="flex flex-col my-4 border-[1px] p-3">
+                        <div className="flex flex-row justify-between">
+                          <p>Begin Focus</p>
+                          <p className=" font-black">{String(beginFocus)}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p>Start Count</p><p className=" font-black">{String(startCount)}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col my-4 border-[1px] p-3">
+                        <div className="flex flex-row justify-between">
+                          <p>Deadline</p>
+                          <p className=" font-black">{useDeadline}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p>Time</p>
+                          <p className=" font-black">{String(useTime)}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p>Difference</p>
+                          <p className=" font-black">{useDifference}</p>
+                        </div>
+                      </div>
+
+
+                      <div className="flex flex-col my-4 gap-4 border-[1px] p-3">
+                        <div className="flex flex-col">
+                          <div className="flex flex-row justify-between">
+                            <p>Duration</p><p className=" font-black">{useDuration}</p>
+                          </div>
+                          <div className="flex flex-row justify-between">
+                            <p>Rest Duration</p><p className=" font-black">{useRestDuration}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <div className="flex flex-row justify-between">
+                            <p>Duration Default</p>
+                            <p className=" font-black">{initDuration}</p>
+                          </div>
+                          <div className="flex flex-row justify-between">
+                            <p>Rest Duration Default</p>
+                            <p className=" font-black">{initRestDuration}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col my-4 border-[1px] p-3">
+                        <div className="flex flex-row justify-between">
+                          <p>Current Session Index</p>
+                          <p className=" font-black">{useSessionIndex}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p>Current Session Type</p>
+                          <p className=" font-black">{useRest ? 'Rest' : 'Work'}</p>
+                        </div>
+                      </div>
+
+
+
+                      <div className="flex flex-col my-4 border-[1px] p-3">
+                        <p>Session Object</p>
+                        <pre className=" ">{JSON.stringify(useSessionsArray, null, 1)}</pre>
+                      </div>
+                    </div>
+                  )
+                }
       </div>
 
 
@@ -305,6 +400,7 @@ export default function Main() {
             sessionIndex={useSessionIndex}
             startCount={startCount}
             beginFocus={beginFocus}
+            localSessionsArray={useSessionsLocalArray}
           />
         </div>
 
@@ -451,7 +547,7 @@ export default function Main() {
           </div>
         </div>
 
-        <div className="w-1/4 pb-3 border-[1px] rounded-md bg-gray-900">
+        <div className="w-1/4 pb-3 border-[1px] rounded-md bg-gray-900 hidden ">
           <Entries/>
         </div>
       </div>
