@@ -33,5 +33,9 @@ export interface GlobalDefaults {
 
 export interface GlobalSessions {
     tentativeSessions: any[],
-    completedSessions: SessionObject[]
+    completedSessions: SessionObject[],
+    beginFocus: boolean,
+    startCount: boolean,
+    sessionIndex: number,
+    localSessionIndex: number
 }

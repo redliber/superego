@@ -6,6 +6,7 @@ import { SetStateAction, useEffect, useRef, useState } from "react"
 import { useTime, useTimer } from "react-timer-hook"
 import useSWR, { useSWRConfig } from "swr"
 import type { SessionObject, EntryObject, TentativeSessionObject } from "@/app/lib/types"
+import useGlobalSessions from "@/app/states/useGlobalSessions"
 
 const PLACEHOLDERDATA = [
     {start: `13:30`, end: `14:30`},
@@ -38,9 +39,6 @@ interface SelectedDate {
 interface MainTimeScrubArgument {
 
   sessionIndex: number,
-  startCount: boolean,
-  beginFocus: boolean,
-  tentativeSessions: {}[]
 }
 
 // ==========================================================================================
@@ -49,8 +47,12 @@ interface MainTimeScrubArgument {
 // ==========================================================================================
 // ==========================================================================================
 
-export default function MainTimeScrub({sessionIndex, startCount, beginFocus, tentativeSessions}: MainTimeScrubArgument) {
+export default function MainTimeScrub() {
     const { cache, mutate } = useSWRConfig()
+
+    const { state, updateState } = useGlobalSessions()
+    const { beginFocus, startCount, tentativeSessions} = state
+
     const serverEntries = cache.get("/api/entry")
 
     const dateNow = DateTime.now()
@@ -285,11 +287,7 @@ export default function MainTimeScrub({sessionIndex, startCount, beginFocus, ten
                     }}
                   >
                     <TentativeArea
-                      startCount={startCount}
-                      sessionIndex={sessionIndex}
-                      tentativeArray={tentativeSessions}
                       useCurrent={useCurrent}
-                      beginFocus={beginFocus}
                       />
                   </div>
 
@@ -361,7 +359,10 @@ function TimeBlock({time}: {time:number}) {
     )
 }
 
-function TentativeArea({tentativeArray, useCurrent, sessionIndex, startCount, beginFocus} : {tentativeArray:any[], useCurrent:number,  sessionIndex:number, startCount:boolean, beginFocus:boolean}) {
+function TentativeArea({useCurrent} : {useCurrent:number}) {
+  const { state, updateState } = useGlobalSessions()
+  const { beginFocus, startCount, tentativeSessions, sessionIndex} = state
+
   const [useTopPos, setTopPos] = useState<number>(0)
 
   useEffect(() => {
@@ -380,7 +381,7 @@ function TentativeArea({tentativeArray, useCurrent, sessionIndex, startCount, be
         <div className= " w-3/4 place-self-end rounded-b-sm overflow-clip h-full "
         >
           {
-            tentativeArray.map(({sessionDuration, sessionType}, index) => {
+            tentativeSessions.map(({sessionDuration, sessionType}, index) => {
               return (
                   <TentativeBlock
                     key={index}

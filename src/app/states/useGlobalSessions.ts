@@ -9,6 +9,10 @@ const STORAGE_KEY = 'app/global-sessions';
 const defaultState: GlobalSessions = {
   tentativeSessions: [],
   completedSessions: [],
+  beginFocus: false,
+  startCount: false,
+  sessionIndex: 0,
+  localSessionIndex: 0
 };
 
 // Fetcher that retrieves data from localStorage or returns a default state

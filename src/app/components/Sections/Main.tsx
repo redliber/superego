@@ -31,16 +31,26 @@ export default function Main() {
   const serverEntries = cache.get("/api/entry")
 
   const { state:globalDefaults , updateState:updateGlobalDefaults } = useGlobalDefaults()
-  const { defaultWorkDuration, defaultRestDuration, defaultSessionAmount } = globalDefaults
+  const { 
+    defaultWorkDuration, 
+    defaultRestDuration, 
+    defaultSessionAmount 
+  } = globalDefaults
 
   const { state:globalSessions, updateState:updateGlobalSessions} = useGlobalSessions()
-  const { tentativeSessions, completedSessions } = globalSessions
+  const { 
+    tentativeSessions, 
+    completedSessions, 
+
+    beginFocus, 
+    startCount, 
+
+    sessionIndex, 
+    localSessionIndex 
+  } = globalSessions
 
   // LOCALSTORAGE
   const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
-
-  const [beginFocus, setBeginFocus] = useState(false)
-  const [startCount, setStartCount] = useState(false)
 
   // ACTIVE DURATIONS
   const [useDuration, setDuration] = useState(defaultWorkDuration)
@@ -52,10 +62,6 @@ export default function Main() {
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
 
-  // SESSION TRACKING
-  const [useSessionIndex, setSessionIndex] = useState(0)
-  const [useLocalSessionIndex, setLocalSessionIndex] = useState(0)
-
   // JOURNALING
   const [useFocusTitle, setFocusTitle] = useState('')
   const [useFocusJournal, setFocusJournal] = useState('')
@@ -66,7 +72,6 @@ export default function Main() {
 
   // Planning tentativeSessions
   useEffect(() => {
-    console.log('Changing Duration', useDuration);
     const arr = Array.from({ length: defaultSessionAmount }, () => 0).map((item, index) => {
 
       const durationLookUp = (typeLookUp:string):number => {
@@ -81,7 +86,7 @@ export default function Main() {
         
         // If the requested session isn't already available in the SessionSarray localStorage
         else {
-          if (useSessionIndex === index) {
+          if (sessionIndex === index) {
             return typeLookUp === 'work' ? useDuration : useRestDuration
           } else {
             return typeLookUp === 'work' ? defaultWorkDuration : defaultRestDuration
@@ -108,7 +113,7 @@ export default function Main() {
       return sessionArr
     }).flat()
     updateGlobalSessions({tentativeSessions: [...arr]})
-  }, [defaultWorkDuration, defaultRestDuration, defaultSessionAmount, useSessionIndex, useRestDuration, useDuration])
+  }, [defaultWorkDuration, defaultRestDuration, defaultSessionAmount, sessionIndex, useRestDuration, useDuration])
 
   useEffect(() => {
     if (beginFocus) {
@@ -151,15 +156,15 @@ export default function Main() {
   useEffect(() => {
     if (useTime === 0) {
       if (!useRest) {
-        if (startCount) setSessionIndex(prev => prev + 1)
-        setLocalSessionIndex(prev => prev + 1)
-        setStartCount(false)
+        if (startCount) updateGlobalSessions({sessionIndex: sessionIndex + 1})
+        updateGlobalSessions({localSessionIndex: localSessionIndex + 1})
+        updateGlobalSessions({startCount: false})
         setTime(defaultWorkDuration)
         setDuration(defaultWorkDuration)
         setRest(true)
-      } else {
-        setLocalSessionIndex(prev => prev + 1)
-        setStartCount(false)
+    } else {
+        updateGlobalSessions({localSessionIndex: localSessionIndex + 1})
+        updateGlobalSessions({startCount: false})
         setTime(defaultRestDuration)
         setRestDuration(defaultRestDuration)
         setRest(false)
@@ -167,40 +172,37 @@ export default function Main() {
     }
   }, [useTime, useRest, startCount])
 
-  // Logic for Default Durations and Beginning Focus for the First Time
   useEffect(() => {
-    // When we haven't begun a Focus, the `InitDuration` default should be modifiable along with `useDuration`; However, when we've already started the Focus session, 'beginFocus' should be true.
-    if (useSessionIndex <= 0 && !startCount) {
-      // updateGlobalDefaults({defaultWorkDuration:useDuration})
-    } else {
-      // When 'beginFocus' is true, the Input for Title will change to the actual Heading itself. Refer to <p> with id="focus-title".
-      setBeginFocus(true)
+    if (sessionIndex <= 0 && startCount) {
+      console.log('Changing beginFocus to true');
+      updateGlobalSessions({beginFocus: true})
     }
-  }, [useSessionIndex, startCount, useDuration])
+  }, [startCount, sessionIndex])
 
 
 
   function startFocusHandler () {
-    setStartCount(true)
+    console.log('Starting Session');
     setDeadline(addInterval(new Date().toISOString(), `PT${useRest ? useRestDuration : useDuration}S`)) // Use M instead of S when finished with debugging
 
     const currentSession : SessionObject = {
-      sessionIndex: useSessionIndex,
+      sessionIndex: sessionIndex,
       sessionTime: parseTimeZoneBeforePOST(DateTime.now().toISO()),
       sessionDuration: String(useRest ? useRestDuration : useDuration),
       sessionType: useRest ? 'break' : 'work',
     }
 
     // Signifying the beginning of a Session. Saving the Session entry into `localStorage`.
-    updateGlobalSessions({completedSessions: [...completedSessions, currentSession]})
+    updateGlobalSessions({
+      startCount: true,
+      completedSessions: [...completedSessions, currentSession]})
   }
 
   function cleanFocusHandler () {
-    setBeginFocus(false)
-    setSessionIndex(0)
+    updateGlobalSessions({beginFocus: false, sessionIndex: 0})
     setDuration(defaultWorkDuration)
     setTime(defaultWorkDuration)
-    setStartCount(false)
+    updateGlobalSessions({startCount: false})
     setRest(false)
     setFocusTitle('')
     localStorage.removeItem('SessionsArray')
@@ -368,11 +370,11 @@ export default function Main() {
                       <div className="flex flex-col my-4 border-[1px] p-3">
                         <div className="flex flex-row justify-between">
                           <p>Current Session Index</p>
-                          <p className=" font-black">{useSessionIndex}</p>
+                          <p className=" font-black">{sessionIndex}</p>
                         </div>
                         <div className="flex flex-row justify-between">
                           <p>Current Local Session Index</p>
-                          <p className=" font-black">{useLocalSessionIndex}</p>
+                          <p className=" font-black">{localSessionIndex}</p>
                         </div>
                         <div className="flex flex-row justify-between">
                           <p>Current Session Type</p>
@@ -395,12 +397,7 @@ export default function Main() {
 
         {/* MAINTIMESCRUB */}
         <div className="w-1/4 border-[1px] p-3 rounded-md bg-gray-900">
-          <MainTimeScrub
-            sessionIndex={useSessionIndex}
-            startCount={startCount}
-            beginFocus={beginFocus}
-            tentativeSessions={tentativeSessions}
-          />
+          <MainTimeScrub/>
         </div>
 
 
@@ -411,11 +408,11 @@ export default function Main() {
             {Array.from({length: defaultSessionAmount}, () => 0).map((item, index) => (
               <div key={index} 
                 className={`min-h-full transition-all duration-500 ease-in-out ` 
-                  + `${startCount && index == useSessionIndex ? ` animate-undulate ` : ` `}`
+                  + `${startCount && index == sessionIndex ? ` animate-undulate ` : ` `}`
                 } 
                 style={{
                   width: `calc(1/${globalDefaults.defaultSessionAmount} * 100%)` ,
-                  backgroundColor: index < useSessionIndex ? 'var(--color-amber-400)' : (index === useSessionIndex && useRest) ? 'var(--color-green-400)' : (index === useSessionIndex && !useRest) ? 'var(--color-amber-200)' : 'white'
+                  backgroundColor: index < sessionIndex ? 'var(--color-amber-400)' : (index === sessionIndex && useRest) ? 'var(--color-green-400)' : (index === sessionIndex && !useRest) ? 'var(--color-amber-200)' : 'white'
                 }}>
               </div>
             ))}
