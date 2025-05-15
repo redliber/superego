@@ -13,11 +13,25 @@ export interface EntryObject {
     entrySessions?: {sessionIDs: IdObject[]}
   }
 
-export interface SessionObject {
+export interface SessionObject extends TentativeSessionObject {
     id?: string;
-    sessionIndex: number;
     sessionTime: Date;
+    sessionEntry?: IdObject
+}
+
+export interface TentativeSessionObject {
+    sessionIndex: number;
     sessionDuration: string;
     sessionType: SessionType;
-    sessionEntry?: IdObject
+}
+
+export interface GlobalDefaults {
+    defaultWorkDuration: number,
+    defaultRestDuration: number,
+    defaultSessionAmount: number
+}
+
+export interface GlobalSessions {
+    tentativeSessions: any[],
+    completedSessions: SessionObject[]
 }

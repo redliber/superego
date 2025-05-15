@@ -1,20 +1,21 @@
 import React, { useEffect, useState } from "react"
+import { number } from "../../../../dbschema/edgeql-js/modules/std"
 
-export default function MainTimeSlider({onChangeCallback, useValue, useColor='var(--color-green-400)'}: {onChangeCallback: (value: number) => void, useValue: number, useColor: string}) {
+export default function MainTimeSlider({onChangeCallback, useValue, useColor='var(--color-green-400)', customMax=60, customMin=5}: {onChangeCallback: (value: number) => void, useValue: number, useColor: string, customMax?:number, customMin?:number}) {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(event.target.value)
     onChangeCallback(newValue)
   }
 
-  const percentage = ((useValue - 5) / (60 - 5)) * 100;
+  const percentage = ((useValue - customMin) / (customMax - customMin)) * 100;
 
   return (
     <div className="flex flex-col">
       <input
         type="range"
-        min={5}
-        max={60}
+        min={customMin}
+        max={customMax}
         step={1}
         value={useValue}
         onChange={handleChange}

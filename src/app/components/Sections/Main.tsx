@@ -9,7 +9,7 @@ import { useTime, useTimer } from "react-timer-hook"
 import MainButton from "../MainUIs/MainButton";
 import MainTimeSlider from "../MainUIs/MainTimeSlider";
 import MainInputText from "../MainUIs/MainInputText";
-import { EntryObject, SessionObject } from "@/app/lib/types";
+import { EntryObject, SessionObject, TentativeSessionObject } from "@/app/lib/types";
 
 import useSWR, {useSWRConfig} from 'swr';
 import MainModal from "../MainUIs/MainModal";
@@ -17,81 +17,75 @@ import { Preahvihear } from "next/font/google";
 import MainTimeScrub from "../MainUIs/MainTimeScrub";
 import Entries from "./Entries";
 import { Settings } from "lucide-react";
+import useGlobalDefaults from "@/app/states/useGlobalDefaults";
+import useGlobalSessions from "@/app/states/useGlobalSessions";
 
 
 
 
 export default function Main() {
   const { cache, mutate } = useSWRConfig()
+  const modalRef = useRef(null)
+  const settingsRef = useRef(null)
 
   const serverEntries = cache.get("/api/entry")
 
+  const { state:globalDefaults , updateState:updateGlobalDefaults } = useGlobalDefaults()
+  const { defaultWorkDuration, defaultRestDuration, defaultSessionAmount } = globalDefaults
+
+  const { state:globalSessions, updateState:updateGlobalSessions} = useGlobalSessions()
+  const { tentativeSessions, completedSessions } = globalSessions
+
   // LOCALSTORAGE
   const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
-  const [useSessionsArray, setSessionsArray] = useState<SessionObject[]>([])
 
   const [beginFocus, setBeginFocus] = useState(false)
   const [startCount, setStartCount] = useState(false)
 
-  const [initDuration, setInitDuration] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('defaultDuration');
-      return stored && !isNaN(Number(stored)) ? Number(stored) : 25;
-    }
-    return 25; // Default value for server-side rendering
-  });
-
-  const [initRestDuration, setInitRestDuration] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('defaultRest');
-      return stored && !isNaN(Number(stored)) ? Number(stored) : 10;
-    }
-    return 10; // Default value for server-side rendering
-  });
+  // ACTIVE DURATIONS
+  const [useDuration, setDuration] = useState(defaultWorkDuration)
+  const [useRestDuration, setRestDuration] = useState(defaultRestDuration)
+  // If useRest is true, use useRestDuration
+  const [useRest, setRest] = useState(false)
   
-  
-  const [useDuration, setDuration] = useState(initDuration)
-  const [useRestDuration, setRestDuration] = useState(initRestDuration)
-
   const [useDeadline, setDeadline] = useState('')
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
 
-
   // SESSION TRACKING
-  const [useSessionAmt, setSessionAmt] = useState(5)
-  const [useSessionsLocalArray, setSessionsLocalArray] = useState<{}[]>([])
   const [useSessionIndex, setSessionIndex] = useState(0)
-  const [useRest, setRest] = useState(false)
+  const [useLocalSessionIndex, setLocalSessionIndex] = useState(0)
 
   // JOURNALING
   const [useFocusTitle, setFocusTitle] = useState('')
   const [useFocusJournal, setFocusJournal] = useState('')
 
-  const modalRef = useRef(null)
-  const settingsRef = useRef(null)
   const [useLoadingPosting, setLoadingPosting] = useState(false)
+  const [useDebug, setDebug] = useState(false)
 
-  // PLANNING SESSIONS
+
+  // Planning tentativeSessions
   useEffect(() => {
-    const n = Math.max(1, Math.floor(useSessionAmt > 0 ? useSessionAmt : 1));
-    const arr = Array.from({ length: n }, () => 0).map((item, index) => {
+    console.log('Changing Duration', useDuration);
+    const arr = Array.from({ length: defaultSessionAmount }, () => 0).map((item, index) => {
 
       const durationLookUp = (typeLookUp:string):number => {
-        const findSessionIndexFromLocalStorage = useSessionsArray.find((item) => 
+        const findSessionIndexFromLocalStorage = completedSessions.find((item) => 
           item.sessionType === typeLookUp && item.sessionIndex === index
         )
 
-        if (useSessionIndex === index) {
-          if (!startCount) {
+        // If the requested session is already available in the SessionsArray localStorage
+        if (findSessionIndexFromLocalStorage) {
+          return Number(findSessionIndexFromLocalStorage.sessionDuration)
+        }
+        
+        // If the requested session isn't already available in the SessionSarray localStorage
+        else {
+          if (useSessionIndex === index) {
             return typeLookUp === 'work' ? useDuration : useRestDuration
           } else {
-            return Number(findSessionIndexFromLocalStorage?.sessionDuration)
-          }
-        } else if (useSessionIndex < index) {
-          return typeLookUp === 'work' ? initDuration : initRestDuration
-        } else {
-          return Number(findSessionIndexFromLocalStorage?.sessionDuration)
+            return typeLookUp === 'work' ? defaultWorkDuration : defaultRestDuration
+          }  
         }
       }
 
@@ -112,9 +106,9 @@ export default function Main() {
       sessionArr.push(workObject)
 
       return sessionArr
-    })
-    setSessionsLocalArray(arr);
-  }, [useSessionAmt, useSessionIndex, useRestDuration, useDuration])
+    }).flat()
+    updateGlobalSessions({tentativeSessions: [...arr]})
+  }, [defaultWorkDuration, defaultRestDuration, defaultSessionAmount, useSessionIndex, useRestDuration, useDuration])
 
   useEffect(() => {
     if (beginFocus) {
@@ -126,7 +120,7 @@ export default function Main() {
         entryName: useFocusTitle,
       };
 
-      // Update state
+      // Update globalDefaults
       setEntryObject(newEntryObject);
 
       // Update localStorage with the same object
@@ -158,14 +152,16 @@ export default function Main() {
     if (useTime === 0) {
       if (!useRest) {
         if (startCount) setSessionIndex(prev => prev + 1)
+        setLocalSessionIndex(prev => prev + 1)
         setStartCount(false)
-        setTime(initDuration)
-        setDuration(initDuration)
+        setTime(defaultWorkDuration)
+        setDuration(defaultWorkDuration)
         setRest(true)
-    } else {
+      } else {
+        setLocalSessionIndex(prev => prev + 1)
         setStartCount(false)
-        setTime(initRestDuration)
-        setDuration(initRestDuration)
+        setTime(defaultRestDuration)
+        setRestDuration(defaultRestDuration)
         setRest(false)
       }
     }
@@ -175,7 +171,7 @@ export default function Main() {
   useEffect(() => {
     // When we haven't begun a Focus, the `InitDuration` default should be modifiable along with `useDuration`; However, when we've already started the Focus session, 'beginFocus' should be true.
     if (useSessionIndex <= 0 && !startCount) {
-      setInitDuration(useDuration)
+      // updateGlobalDefaults({defaultWorkDuration:useDuration})
     } else {
       // When 'beginFocus' is true, the Input for Title will change to the actual Heading itself. Refer to <p> with id="focus-title".
       setBeginFocus(true)
@@ -196,18 +192,14 @@ export default function Main() {
     }
 
     // Signifying the beginning of a Session. Saving the Session entry into `localStorage`.
-    setSessionsArray(prevSessions => [
-      ...prevSessions,
-      currentSession
-    ])
-    localStorage.setItem('SessionsArray', JSON.stringify([...useSessionsArray, currentSession]))
+    updateGlobalSessions({completedSessions: [...completedSessions, currentSession]})
   }
 
   function cleanFocusHandler () {
     setBeginFocus(false)
     setSessionIndex(0)
-    setDuration(initDuration)
-    setTime(initDuration)
+    setDuration(defaultWorkDuration)
+    setTime(defaultWorkDuration)
     setStartCount(false)
     setRest(false)
     setFocusTitle('')
@@ -245,7 +237,7 @@ export default function Main() {
 
         const sessionsIDs: any[] = []
 
-        await Promise.all(useSessionsArray.map(async (item : SessionObject) => {
+        await Promise.all(completedSessions.map(async (item : SessionObject) => {
           const newItem = {...item, sessionEntry: {id: getEntryID}}
           const sessionID = await postSession(getEntryID, newItem)
           sessionsIDs.push(sessionID)
@@ -306,7 +298,6 @@ export default function Main() {
     }
   }
 
-  const [useDebug, setDebug] = useState(false)
 
 
   return (
@@ -314,11 +305,11 @@ export default function Main() {
 
 
       {/* DEBUGGING AREA */}
-      <div className="fixed top-0 right-[40rem] p-4 h-[65vh] w-xl flex flex-col gap-4 ">
+      <div className="fixed top-0 right-[36rem] z-[9999] p-4  w-xl flex flex-col gap-4 ">
         <div className="cursor-pointer hover:font-black" onClick={() => setDebug(!useDebug)}>MainPage Debug</div>
                 {
                   useDebug && (
-                    <div className="flex flex-col mb-10 font-thin text-sm bg-gray-600 p-6 overflow-y-scroll">
+                    <div className="flex h-[400px] flex-col mb-10 font-thin text-sm bg-gray-600 p-6 overflow-y-scroll">
 
                       <div className="flex flex-col my-4 border-[1px] p-3">
                         <div className="flex flex-row justify-between">
@@ -346,6 +337,8 @@ export default function Main() {
                       </div>
 
 
+
+
                       <div className="flex flex-col my-4 gap-4 border-[1px] p-3">
                         <div className="flex flex-col">
                           <div className="flex flex-row justify-between">
@@ -357,15 +350,19 @@ export default function Main() {
                         </div>
 
                         <div className="flex flex-col">
-                          <div className="flex flex-row justify-between">
-                            <p>Duration Default</p>
-                            <p className=" font-black">{initDuration}</p>
-                          </div>
-                          <div className="flex flex-row justify-between">
-                            <p>Rest Duration Default</p>
-                            <p className=" font-black">{initRestDuration}</p>
-                          </div>
+                        <div className="flex flex-row justify-between">
+                          <strong>GLOBAL_STATE_KEY</strong>
                         </div>
+                        <div className="flex flex-row justify-between">
+                          <p>defaultWorkDuration</p>
+                          <p className=" font-black">{String(globalDefaults.defaultWorkDuration)}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p>defaultRestDuration</p>
+                          <p className=" font-black">{String(globalDefaults.defaultRestDuration)}</p>
+                        </div>
+                      </div>
+
                       </div>
 
                       <div className="flex flex-col my-4 border-[1px] p-3">
@@ -374,16 +371,19 @@ export default function Main() {
                           <p className=" font-black">{useSessionIndex}</p>
                         </div>
                         <div className="flex flex-row justify-between">
+                          <p>Current Local Session Index</p>
+                          <p className=" font-black">{useLocalSessionIndex}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
                           <p>Current Session Type</p>
                           <p className=" font-black">{useRest ? 'Rest' : 'Work'}</p>
                         </div>
                       </div>
 
 
-
-                      <div className="flex flex-col my-4 border-[1px] p-3">
-                        <p>Session Object</p>
-                        <pre className=" ">{JSON.stringify(useSessionsArray, null, 1)}</pre>
+                      <div className="flex flex-col gap-2 my-4 border-[1px] p-3">
+                        <p>Completed Session Array</p>
+                        <pre className=" ">{JSON.stringify(completedSessions, null, 1)}</pre>
                       </div>
                     </div>
                   )
@@ -392,75 +392,84 @@ export default function Main() {
 
 
       <div className="flex flex-row gap-6">
+
+        {/* MAINTIMESCRUB */}
         <div className="w-1/4 border-[1px] p-3 rounded-md bg-gray-900">
           <MainTimeScrub
-            workDuration={useDuration}
-            restDuration={useRestDuration}
-            sessionAmount={Number(useSessionAmt)}
             sessionIndex={useSessionIndex}
             startCount={startCount}
             beginFocus={beginFocus}
-            localSessionsArray={useSessionsLocalArray}
+            tentativeSessions={tentativeSessions}
           />
         </div>
 
+
+
+        {/* TIMELINE SCRUB */}
         <div className="w-3/4 grow px-6 py-6 border-[1px] rounded-md bg-gray-900 flex flex-col justify-between">
           <div className="flex flex-row gap-4 h-2 my-6">
-            {useSessionsLocalArray.map((item, index) => (
+            {Array.from({length: defaultSessionAmount}, () => 0).map((item, index) => (
               <div key={index} 
                 className={`min-h-full transition-all duration-500 ease-in-out ` 
                   + `${startCount && index == useSessionIndex ? ` animate-undulate ` : ` `}`
                 } 
                 style={{
-                  width: `calc(1/${useSessionAmt} * 100%)` ,
+                  width: `calc(1/${globalDefaults.defaultSessionAmount} * 100%)` ,
                   backgroundColor: index < useSessionIndex ? 'var(--color-amber-400)' : (index === useSessionIndex && useRest) ? 'var(--color-green-400)' : (index === useSessionIndex && !useRest) ? 'var(--color-amber-200)' : 'white'
                 }}>
               </div>
             ))}
+
+
+            {/* DEFAULT SETTINGS */}
             <div className="flex flex-row items-center">
               <MainModal ref={settingsRef} id='settings-modal' title='Default Settings' triggerText="Defaults">
                 <div className="flex flex-col gap-10 my-12">
                   <div className="flex flex-col gap-2">
                     <div>
-                      <p className="text-xl">Default Work Duration: { useDuration } Minutes</p>
+                      <p className="text-xl">Default Work Duration: { defaultWorkDuration } Minutes</p>
                     </div>
                     <MainTimeSlider
                         useColor='var(--color-gray-500)'
-                        useValue={useDuration}
+                        useValue={defaultWorkDuration}
                         onChangeCallback={(e) => {
-                          setDuration(e)
-                          localStorage.setItem('defaultDuration', String(e))
+                          updateGlobalDefaults({defaultWorkDuration:e})
                         }}
                         />
                   </div>
                   <div className="flex flex-col gap-2">
                     <div>
-                      <p className="text-xl">Default Rest Duration: { useRestDuration } Minutes</p>
+                      <p className="text-xl">Default Rest Duration: { defaultRestDuration } Minutes</p>
                     </div>
                     <MainTimeSlider
                         useColor='var(--color-gray-500)'
-                        useValue={useRestDuration}
+                        useValue={defaultRestDuration}
                         onChangeCallback={(e) => {
-                          setRestDuration(e)
-                          localStorage.setItem('defaultRest', String(e))
+                          updateGlobalDefaults({defaultRestDuration:e})
                         }}
                         />
                   </div>
                   <div className="flex flex-col gap-2">
                     <div>
-                      <p className="text-xl">Default Number of Sessions: { useSessionAmt }</p>
+                      <p className="text-xl">Default Number of Sessions: { defaultSessionAmount }</p>
                     </div>
                     <div>
-                      <MainInputText 
-                        label="Default" 
-                        onChangeHandler={(e) => {
-                        setSessionAmt(e.target.value)}
-                        }/>
+                      <MainTimeSlider
+                        useColor='var(--color-gray-500)'
+                        useValue={defaultSessionAmount}
+                        customMax={8}
+                        customMin={3}
+                        onChangeCallback={(e) => {
+                          updateGlobalDefaults({defaultSessionAmount:e})
+                        }}
+                        />
                     </div>
                   </div>
                 </div>
               </MainModal>
             </div>
+
+
           </div>
 
 
@@ -547,6 +556,9 @@ export default function Main() {
           </div>
         </div>
 
+
+
+        {/* ENTRIES LIST */}
         <div className="w-1/4 pb-3 border-[1px] rounded-md bg-gray-900 hidden ">
           <Entries/>
         </div>

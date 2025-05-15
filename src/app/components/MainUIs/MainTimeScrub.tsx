@@ -5,7 +5,7 @@ import { DateTime, Duration } from "luxon"
 import { SetStateAction, useEffect, useRef, useState } from "react"
 import { useTime, useTimer } from "react-timer-hook"
 import useSWR, { useSWRConfig } from "swr"
-import type { SessionObject, EntryObject } from "@/app/lib/types"
+import type { SessionObject, EntryObject, TentativeSessionObject } from "@/app/lib/types"
 
 const PLACEHOLDERDATA = [
     {start: `13:30`, end: `14:30`},
@@ -20,7 +20,7 @@ for(let i = TIME_START; i <= TIME_END; i++) {
     timeArray.push(i)
 }
 
-const BLOCK_HEIGHT = 1000
+const BLOCK_HEIGHT = 250
 const TRUE_TIMEBLOCKS_HEIGHT = BLOCK_HEIGHT * timeArray.length
 
 function fitTime (time:number) {
@@ -36,13 +36,11 @@ interface SelectedDate {
 }
 
 interface MainTimeScrubArgument {
-  workDuration: number,
-  restDuration: number,
-  sessionAmount: number,
+
   sessionIndex: number,
   startCount: boolean,
   beginFocus: boolean,
-  localSessionsArray: {}[]
+  tentativeSessions: {}[]
 }
 
 // ==========================================================================================
@@ -51,7 +49,7 @@ interface MainTimeScrubArgument {
 // ==========================================================================================
 // ==========================================================================================
 
-export default function MainTimeScrub({workDuration, restDuration, sessionAmount, sessionIndex, startCount, beginFocus, localSessionsArray}: MainTimeScrubArgument) {
+export default function MainTimeScrub({sessionIndex, startCount, beginFocus, tentativeSessions}: MainTimeScrubArgument) {
     const { cache, mutate } = useSWRConfig()
     const serverEntries = cache.get("/api/entry")
 
@@ -116,10 +114,6 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
       }, 0)
     }
 
-
-
-
-
     // Fetching sessionData from the api route and assigning each events into the useSessions state.
 
     const queryParam = `${useDate.year}-${String(useDate.month).padStart(2, "0")}-${String(useDate.day).padStart(2, "0")}`
@@ -183,48 +177,21 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
         setCurrent(fitted)
     }, [minutes, hours, seconds])
 
-
-    // TENTATIVE TIME BLOCKS ARRAY
-    const tentativeArray = [...Array(sessionAmount * 2).keys()].map((item, index) => {
-      if (index % 2 == 0) {
-        return {
-          type: 'work',
-          duration: workDuration
-        }
-      } else {
-        return {
-          type: 'break',
-          duration: restDuration
-        }
-      }
-    })
-
     const [useDebug, setDebug] = useState(false)
 
 
     return (
         <>
-            <div className="fixed top-0 right-0 p-4 h-[65vh] w-xl  hidescrollbar flex flex-col gap-4 overflow-hidden">
+
+            {/* DEBUGGING AREA */}
+            <div className="fixed top-0 right-0 p-4 w-xl  hidescrollbar flex flex-col gap-4 overflow-hidden">
               <div className="cursor-pointer hover:font-black" onClick={() => setDebug(!useDebug)}>MainTimeScrub Debug</div>
               {
                 useDebug && (
 
-                    <div className=" bg-gray-600 p-4flex flex-col h-[65vh] overflow-y-scroll p-6 ">
-                      <div className="flex flex-col my-4 border-[1px] p-3">
-                        <div className="flex flex-row justify-between">
-                          <p className="font-black">workDuration</p><p>{workDuration}</p>
-                        </div>
-                        <div className="flex flex-row justify-between">
-                          <p className="font-black">restDuration</p><p>{restDuration}</p>
-                        </div>
-                      </div>
-                      <div className="flex flex-row gap-2 my-4 border-[1px] p-3">
-                        <div className="flex flex-col w-1/2 border-r-[1px] p-1">
-                          <p className="font-black">tentativeArray</p><pre>{JSON.stringify(tentativeArray, null, 1)}</pre>
-                        </div>
-                        <div className="flex flex-col w-1/2 p-1">
-                          <p className="font-black">localSessionsArray</p><pre>{JSON.stringify(localSessionsArray, null, 1)}</pre>
-                        </div>
+                    <div className=" bg-gray-600 h-[400px] flex flex-col overflow-y-scroll p-6 ">
+                      <div className="flex flex-col gap-2 my-4 border-[1px] p-3">
+                        <p className="font-black">tentativeSessions</p><pre>{JSON.stringify(tentativeSessions, null, 1)}</pre>
                       </div>
                     </div>
 
@@ -233,6 +200,7 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
 
 
             </div>
+
             {/* TOP SECTION */}
             <div>
                 <div className="flex flex-row justify-between align-top items-start bg-gray-900 sticky z-50 top-0 px-2 pb-2 w-full text-xs "
@@ -278,11 +246,11 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
                 {/* Needle Pin */}
                 {
                   checkIfCurrentDay &&
-                  <div id="needlepin" className="min-h-0.5 bg-amber-50 absolute z-40 w-full place-self-end place-items-end "
+                  <div id="needlepin" className="h-0.5 bg-amber-50 absolute z-40 w-full place-self-end place-items-end "
                       style={{
                           top: `${useCurrent}px`
                       }}
-                  ></div>
+                  ><p className="text-white font-black text-xs place-self-start py-1">{useCurrent.toFixed(2)}</p></div>
                 }
 
 
@@ -319,16 +287,13 @@ export default function MainTimeScrub({workDuration, restDuration, sessionAmount
                     <TentativeArea
                       startCount={startCount}
                       sessionIndex={sessionIndex}
-                      tentativeArray={tentativeArray}
+                      tentativeArray={tentativeSessions}
                       useCurrent={useCurrent}
                       beginFocus={beginFocus}
                       />
                   </div>
 
                 }
-
-
-
 
                 {/* Hiding Scrollbar */}
                 <style jsx>
@@ -405,8 +370,6 @@ function TentativeArea({tentativeArray, useCurrent, sessionIndex, startCount, be
     }
   }, [beginFocus])
 
-  // console.log(`useTopPos -> ${typeof useCurrent}`);
-
   return (
     <div className=" flex flex-col justify-center absolute w-full overflow-hidden "
       style={{
@@ -417,7 +380,7 @@ function TentativeArea({tentativeArray, useCurrent, sessionIndex, startCount, be
         <div className= " w-3/4 place-self-end rounded-b-sm overflow-clip h-full "
         >
           {
-            tentativeArray.map(({duration, type}, index) => {
+            tentativeArray.map(({sessionDuration, sessionType}, index) => {
               return (
                   <TentativeBlock
                     key={index}
@@ -426,8 +389,8 @@ function TentativeArea({tentativeArray, useCurrent, sessionIndex, startCount, be
                     sessionIndex={sessionIndex}
                     needlePinPos={useCurrent}
                     startCount={startCount}
-                    duration={duration}
-                    type={ type }
+                    duration={ sessionDuration }
+                    type={ sessionType }
                     beginFocus={beginFocus}
                     />
               )
@@ -442,39 +405,63 @@ function TentativeBlock({duration, type, sessionIndex, currentIndex, startCount,
   const tentativeBlockRef = useRef<HTMLDivElement>(null)
 
   const colors = type === "work" ? ' bg-amber-300/25 hover:bg-amber-500 ' : ' bg-green-300/25 hover:bg-green-500 '
-  const height = duration / 60 * BLOCK_HEIGHT
   
   const offsetTop = tentativeBlockRef.current?.offsetTop 
   const absoluteTop = tentativeBlockRef.current?.getBoundingClientRect()
   
   const [useTop, setTop] = useState<string>(`auto`)
-  const [useHeight, setHeight] = useState<number>(height)
+  const [useHeight, setHeight] = useState<number>(duration / 60 * BLOCK_HEIGHT)
 
   useEffect(() => {
-    if (startCount) setHeight(prev => prev)
-    else {
-      if (currentIndex === sessionIndex) setHeight(height)
-    }
+    // if (startCount) setHeight(prev => prev)
+    // else {
+    //   if (currentIndex === sessionIndex) setHeight(duration / 60 * BLOCK_HEIGHT)
+    // }
+
+    setHeight(duration / 60 * BLOCK_HEIGHT)
   }, [startCount, sessionIndex, duration])
 
   return (
     <div
       ref={tentativeBlockRef}
-      className={` w-full px-1 text-xs transition-all duration-150 ease-in-out ` + colors}
+      className={` w-full px-2 pt-1 text-xs transition-all duration-150 ease-in-out ` + colors}
       style={{
         height: `${useHeight}px`,
         top: useTop
       }}
     >
-      <p>StartCount : {String(startCount)}</p>
-      <p>BeginFocus: {String(beginFocus)}</p>
-      <p>OffsetTop : { offsetTop }</p>
-      <p>NeedlePinPos : { needlePinPos }</p>
-      <p>AbsoluteTop : {JSON.stringify(absoluteTop?.y)}</p>
-      <p>ParentPos : {parentPos}</p>
-      <p>Indices : { currentIndex} {sessionIndex}</p>
-      <p>Height : {useHeight}</p>
-        {/* <p className="text-gray-700 font-bold leading-4">{String(type).toWellFormed()} for { duration } Minutes</p> */}
+      <div className="flex flex-row gap-2 w-full justify-between">
+        <div className="flex flex-row gap-2  w-1/2">
+          <p className=" text-right">Current :</p>
+          <p className=" text-left font-black">{currentIndex}</p>
+        </div>
+        <div className="flex flex-row gap-2  w-1/2">
+          <p className=" text-right">Session :</p>
+          <p className=" text-left font-black">{sessionIndex}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-row gap-1 w-full justify-between">
+        <div className="flex flex-row gap-1  w-1/3">
+          <p className=" text-right">Offset :</p>
+          <p className=" text-left font-black">{offsetTop}</p>
+        </div>
+        <div className="flex flex-row gap-2  w-2/3">
+          <p className=" text-right">Absolute :</p>
+          <p className=" text-left font-black">{absoluteTop?.y.toFixed(2)}</p>
+        </div>
+      </div>
+
+      
+      <div className="flex flex-row">
+        <p className="w-1/3 text-left">ParentPos :</p>
+        <p className="w-2/3 text-left font-black">{parentPos.toFixed(2)}</p>
+      </div>
+
+      <div className="flex flex-row">
+        <p className="w-1/3 text-left">Duration :</p>
+        <p className="w-2/3 text-left font-black">{String(type).toWellFormed()} for { duration } Minutes</p>
+      </div>
     </div>
   )
 }
