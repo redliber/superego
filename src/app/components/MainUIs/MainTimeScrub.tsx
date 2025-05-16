@@ -363,9 +363,9 @@ function TentativeArea({useCurrent} : {useCurrent:number}) {
   const { state, updateState } = useGlobalSessions()
   const { beginFocus, startCount, tentativeSessions, sessionIndex} = state
 
-  useEffect(() => {
-    console.log(`tentativeSessions in TentativeArea ${JSON.stringify(tentativeSessions)}`);
-  }, [tentativeSessions])
+  // useEffect(() => {
+  //   console.log(`tentativeSessions in TentativeArea ${JSON.stringify(tentativeSessions)}`);
+  // }, [tentativeSessions])
 
 
   const [useTopPos, setTopPos] = useState<number>(0)

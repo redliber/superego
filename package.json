@@ -26,6 +26,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "jsdom": "^26.1.0",
+    "jsdom-quokka-plugin": "^1.0.16",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

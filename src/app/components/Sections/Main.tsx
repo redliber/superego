@@ -9,7 +9,7 @@ import { useTime, useTimer } from "react-timer-hook"
 import MainButton from "../MainUIs/MainButton";
 import MainTimeSlider from "../MainUIs/MainTimeSlider";
 import MainInputText from "../MainUIs/MainInputText";
-import { EntryObject, SessionObject, TentativeSessionObject } from "@/app/lib/types";
+import { EntryObject, GlobalSessions, SessionObject, TentativeSessionObject } from "@/app/lib/types";
 
 import useSWR, {useSWRConfig} from 'swr';
 import MainModal from "../MainUIs/MainModal";
@@ -61,6 +61,27 @@ export default function Main() {
   const [useDeadline, setDeadline] = useState('')
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
+  
+  const [useTimeAlt, setTimeAlt] = useState(DateTime.now())
+  const [expiryTimestamp, setExpiryTimestamp] = useState(useTimeAlt.plus((useRest ? useRestDuration : useDuration) * 1000 ).toJSDate())
+
+  const {
+    totalSeconds,
+    milliseconds,
+    seconds,
+    minutes,
+    hours,
+    days,
+    isRunning,
+    start,
+    pause,
+    resume,
+    restart,
+  } = useTimer({ 
+    expiryTimestamp: expiryTimestamp,
+    autoStart: false,
+    onExpire: () => console.warn('onExpire called'),  
+  });
 
   // JOURNALING
   const [useFocusTitle, setFocusTitle] = useState('')
@@ -68,6 +89,10 @@ export default function Main() {
 
   const [useLoadingPosting, setLoadingPosting] = useState(false)
   const [useDebug, setDebug] = useState(false)
+
+  useEffect(() => {
+    
+  })
 
 
   // Planning tentativeSessions
@@ -163,15 +188,22 @@ export default function Main() {
   useEffect(() => {
     if (useTime === 0) {
       if (!useRest) {
-        if (startCount) updateGlobalSessions({sessionIndex: sessionIndex + 1})
-        updateGlobalSessions({localSessionIndex: localSessionIndex + 1})
-        updateGlobalSessions({startCount: false})
+
+        updateGlobalSessions({
+          localSessionIndex: localSessionIndex + 1,
+          startCount: false,
+          sessionIndex: startCount ? (sessionIndex + 1) :         sessionIndex
+        })
+
         setTime(defaultWorkDuration)
         setDuration(defaultWorkDuration)
         setRest(true)
     } else {
-        updateGlobalSessions({localSessionIndex: localSessionIndex + 1})
-        updateGlobalSessions({startCount: false})
+        updateGlobalSessions({
+          localSessionIndex: localSessionIndex + 1,
+          startCount: false
+        })
+
         setTime(defaultRestDuration)
         setRestDuration(defaultRestDuration)
         setRest(false)
@@ -189,7 +221,6 @@ export default function Main() {
 
 
   function startFocusHandler () {
-
     setDeadline(addInterval(new Date().toISOString(), `PT${useRest ? useRestDuration : useDuration}S`)) // Use M instead of S when finished with debugging
 
     const currentSession : SessionObject = {
@@ -203,17 +234,37 @@ export default function Main() {
     updateGlobalSessions({
       startCount: true,
       completedSessions: [...completedSessions, currentSession]})
+
+    start()
   }
 
-  function cleanFocusHandler () {
-    updateGlobalSessions({beginFocus: false, sessionIndex: 0})
+  function finishSessionEarly () {
+    const adjustDuration = useDifference
+    const getCompleteSessions = completedSessions
+    const adjustCurrentSession = getCompleteSessions[localSessionIndex]
+    const currentSessionDuration = adjustCurrentSession.sessionDuration
+    adjustCurrentSession.sessionDuration = String(Number(currentSessionDuration) - adjustDuration)
+    
+    updateGlobalSessions({
+      completedSessions: getCompleteSessions
+    })
+
+    setTime(0)
+  }
+
+  async function cleanFocusHandler () {
     setDuration(defaultWorkDuration)
     setTime(defaultWorkDuration)
-    updateGlobalSessions({startCount: false})
+
+    updateGlobalSessions({
+      beginFocus: false, 
+      sessionIndex: 0,
+      startCount: false,
+      completedSessions: []
+    })
+
     setRest(false)
     setFocusTitle('')
-    localStorage.removeItem('SessionsArray')
-    localStorage.removeItem('EntryObject')
   }
 
   function onTitleChangeHandler(e: ChangeEvent<HTMLInputElement>) {
@@ -342,6 +393,22 @@ export default function Main() {
                         <div className="flex flex-row justify-between">
                           <p>Difference</p>
                           <p className=" font-black">{useDifference}</p>
+                        </div>
+                      </div>
+
+
+                      <div className="flex flex-col my-4 border-[1px] p-3">
+                        <div className="flex flex-row justify-between">
+                          <p>totalSeconds</p>
+                          <p className=" font-black">{totalSeconds}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p>seconds</p>
+                          <p className=" font-black">{seconds}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p>isRunning</p>
+                          <p className=" font-black">{String(isRunning)}</p>
                         </div>
                       </div>
 
@@ -493,6 +560,7 @@ export default function Main() {
             }
           </div>
 
+          {/* MAIN TIME SLIDER */}
           <div className="">
             <div className="flex flex-row p-2 mb-12 justify-between">
               <p className={`text-8xl cursor-default select-none font-black leading-20 overflow-hidden text-ellipsis transition-all duration-100 ease-in-out`}>
@@ -514,12 +582,23 @@ export default function Main() {
             />
           </div>
 
-
+          {/* TIME SLIDER BUTTONS */}
           <div className="flex flex-row justify-between">
             <div className="flex flex-row gap-6">
-              <MainButton onClickHandler={startFocusHandler} buttonType="default">
-                  START FOCUS
-              </MainButton>
+              {
+                startCount &&
+                <MainButton onClickHandler={finishSessionEarly} buttonType="default">
+                    FINISH SESSION EARLY
+                </MainButton>
+              }
+              {
+                !startCount &&
+                <MainButton onClickHandler={startFocusHandler} buttonType="default">
+                    {
+                      beginFocus ? 'CONTINUE SESSION' : 'BEGIN FOCUS'
+                    }
+                </MainButton>
+              }
               {
                 beginFocus &&
                 <MainButton onClickHandler={cleanFocusHandler} buttonType="bordered">

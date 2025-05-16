@@ -69,7 +69,7 @@ export default function useGlobalSessions() {
     // Update state and persist to localStorage
     const updateState = (newState: Partial<GlobalSessions>) => {
       const updatedData = { ...data, ...newState } as GlobalSessions;
-      console.log(`updatedData ${JSON.stringify(updatedData)}`);
+      // console.log(`updatedData ${JSON.stringify(updatedData)}`);
 
       mutate(updatedData, false); // Optimistically update cache
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));

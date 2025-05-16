@@ -1,0 +1,14 @@
+{
+  "pro": true,
+  "babel": {
+    "ts": {
+      "compilerOptions": {
+        "jsx": "react"
+      }
+    }
+  },
+  "plugins": ["jsdom-quokka-plugin"],
+  "stdEsm": false,
+  "nativeEsm": false,
+  "node": "/home/redliber/.nvm/versions/node/v22.13.1/bin/node"
+}
