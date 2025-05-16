@@ -81,14 +81,17 @@ export default function Main() {
 
         // If the requested session is already available in the SessionsArray localStorage
         if (findSessionIndexFromLocalStorage) {
+          console.log('Reached storage', index);
           return Number(findSessionIndexFromLocalStorage.sessionDuration)
         }
         
         // If the requested session isn't already available in the SessionSarray localStorage
         else {
           if (sessionIndex === index) {
+            // console.log('Reached usage', index);
             return typeLookUp === 'work' ? useDuration : useRestDuration
           } else {
+            // console.log('Reached default', index);
             return typeLookUp === 'work' ? defaultWorkDuration : defaultRestDuration
           }  
         }
@@ -112,7 +115,11 @@ export default function Main() {
 
       return sessionArr
     }).flat()
+
+    // console.log(`current arr ${JSON.stringify(arr)}`);
+
     updateGlobalSessions({tentativeSessions: [...arr]})
+
   }, [defaultWorkDuration, defaultRestDuration, defaultSessionAmount, sessionIndex, useRestDuration, useDuration])
 
   useEffect(() => {
@@ -182,7 +189,7 @@ export default function Main() {
 
 
   function startFocusHandler () {
-    console.log('Starting Session');
+
     setDeadline(addInterval(new Date().toISOString(), `PT${useRest ? useRestDuration : useDuration}S`)) // Use M instead of S when finished with debugging
 
     const currentSession : SessionObject = {
@@ -353,15 +360,16 @@ export default function Main() {
 
                         <div className="flex flex-col">
                         <div className="flex flex-row justify-between">
-                          <strong>GLOBAL_STATE_KEY</strong>
-                        </div>
-                        <div className="flex flex-row justify-between">
                           <p>defaultWorkDuration</p>
-                          <p className=" font-black">{String(globalDefaults.defaultWorkDuration)}</p>
+                          <p className=" font-black">{String(defaultWorkDuration)}</p>
                         </div>
                         <div className="flex flex-row justify-between">
                           <p>defaultRestDuration</p>
-                          <p className=" font-black">{String(globalDefaults.defaultRestDuration)}</p>
+                          <p className=" font-black">{String(defaultRestDuration)}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p>defaultSessionAmount</p>
+                          <p className=" font-black">{String(defaultSessionAmount)}</p>
                         </div>
                       </div>
 

@@ -363,6 +363,11 @@ function TentativeArea({useCurrent} : {useCurrent:number}) {
   const { state, updateState } = useGlobalSessions()
   const { beginFocus, startCount, tentativeSessions, sessionIndex} = state
 
+  useEffect(() => {
+    console.log(`tentativeSessions in TentativeArea ${JSON.stringify(tentativeSessions)}`);
+  }, [tentativeSessions])
+
+
   const [useTopPos, setTopPos] = useState<number>(0)
 
   useEffect(() => {
@@ -425,7 +430,7 @@ function TentativeBlock({duration, type, sessionIndex, currentIndex, startCount,
   return (
     <div
       ref={tentativeBlockRef}
-      className={` w-full px-2 pt-1 text-xs transition-all duration-150 ease-in-out ` + colors}
+      className={` w-full px-2 pt-1 text-xs transition-all overflow-clip duration-150 ease-in-out ` + colors}
       style={{
         height: `${useHeight}px`,
         top: useTop

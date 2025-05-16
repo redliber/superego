@@ -34,18 +34,20 @@ const fetcher = (defaults: GlobalDefaults) => {
   };
 };
 
+const fetcherSimple = () => defaultState
+
 export default function useGlobalSessions() {
     const { state: defaults } = useGlobalDefaults();
     const { cache } = useSWRConfig();
 
     // Use SWR with a key that depends on defaults to ensure re-fetching if defaults change
     const { data, error, mutate } = useSWR(
-            [STORAGE_KEY, defaults], // Include defaults in the key to handle changes
-            () => fetcher(defaults),
+            STORAGE_KEY, // Include defaults in the key to handle changes
+            fetcher,
                 {
                     revalidateOnFocus: false, // Prevent revalidation on tab focus
                     revalidateOnReconnect: false, // Prevent revalidation on network reconnect
-                    fallbackData: fetcher(defaults), // Use dynamic initial state
+                    fallbackData: defaultState, // Use dynamic initial state
                 }
         );
     
@@ -60,15 +62,17 @@ export default function useGlobalSessions() {
             const initialData = fetcher(defaults);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
             mutate(initialData, false); // Update cache without revalidation
+            console.log(`Reached First Render`);
         }
     }, [defaults, mutate]);
 
     // Update state and persist to localStorage
     const updateState = (newState: Partial<GlobalSessions>) => {
-    const updatedData = { ...data, ...newState } as GlobalSessions;
+      const updatedData = { ...data, ...newState } as GlobalSessions;
+      console.log(`updatedData ${JSON.stringify(updatedData)}`);
 
-    mutate(updatedData, false); // Optimistically update cache
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+      mutate(updatedData, false); // Optimistically update cache
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
     };
 
     return {
