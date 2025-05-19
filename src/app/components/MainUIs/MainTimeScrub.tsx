@@ -179,7 +179,7 @@ export default function MainTimeScrub() {
         setCurrent(fitted)
     }, [minutes, hours, seconds])
 
-    const [useDebug, setDebug] = useState(false)
+    const [useDebug, setDebug] = useState(true)
 
 
     return (

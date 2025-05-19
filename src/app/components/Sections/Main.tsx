@@ -19,6 +19,7 @@ import Entries from "./Entries";
 import { Settings } from "lucide-react";
 import useGlobalDefaults from "@/app/states/useGlobalDefaults";
 import useGlobalSessions from "@/app/states/useGlobalSessions";
+import useGlobalTracker from "@/app/states/useGlobalTracker";
 
 
 
@@ -40,14 +41,26 @@ export default function Main() {
   const { state:globalSessions, updateState:updateGlobalSessions} = useGlobalSessions()
   const { 
     tentativeSessions, 
-    completedSessions, 
-
+    completedSessions,  
     beginFocus, 
     startCount, 
-
     sessionIndex, 
     localSessionIndex 
   } = globalSessions
+
+  const {
+    state:globalTracker, 
+    timeObject,
+    start, pause, resume, restart, 
+    updateState:updateGlobalTracker 
+  } = useGlobalTracker()
+  
+  const { 
+    sessionDuration, 
+    sessionType, 
+    sessionBegin 
+  } = globalTracker
+  const {seconds, minutes, isRunning} = timeObject
 
   // LOCALSTORAGE
   const [useEntryObject, setEntryObject] = useState<EntryObject | null>(null)
@@ -61,91 +74,65 @@ export default function Main() {
   const [useDeadline, setDeadline] = useState('')
   const [useDifference, setDifference] = useState(useDuration)
   const [useTime, setTime] = useState(subTime(useDeadline, DateTime.now().toISO()))
-  
-  const [useTimeAlt, setTimeAlt] = useState(DateTime.now())
-  const [expiryTimestamp, setExpiryTimestamp] = useState(useTimeAlt.plus((useRest ? useRestDuration : useDuration) * 1000 ).toJSDate())
-
-  const {
-    totalSeconds,
-    milliseconds,
-    seconds,
-    minutes,
-    hours,
-    days,
-    isRunning,
-    start,
-    pause,
-    resume,
-    restart,
-  } = useTimer({ 
-    expiryTimestamp: expiryTimestamp,
-    autoStart: false,
-    onExpire: () => console.warn('onExpire called'),  
-  });
 
   // JOURNALING
   const [useFocusTitle, setFocusTitle] = useState('')
   const [useFocusJournal, setFocusJournal] = useState('')
 
   const [useLoadingPosting, setLoadingPosting] = useState(false)
-  const [useDebug, setDebug] = useState(false)
-
-  useEffect(() => {
-    
-  })
-
+  const [useDebug, setDebug] = useState(true)
 
   // Planning tentativeSessions
-  useEffect(() => {
-    const arr = Array.from({ length: defaultSessionAmount }, () => 0).map((item, index) => {
+  // useEffect(() => {
+  //   const arr = Array.from({ length: defaultSessionAmount }, () => 0).map((item, index) => {
 
-      const durationLookUp = (typeLookUp:string):number => {
-        const findSessionIndexFromLocalStorage = completedSessions.find((item) => 
-          item.sessionType === typeLookUp && item.sessionIndex === index
-        )
+  //     const durationLookUp = (typeLookUp:string):number => {
+  //       const findSessionIndexFromLocalStorage = completedSessions.find((item) => 
+  //         item.sessionType === typeLookUp && item.sessionIndex === index
+  //       )
 
-        // If the requested session is already available in the SessionsArray localStorage
-        if (findSessionIndexFromLocalStorage) {
-          console.log('Reached storage', index);
-          return Number(findSessionIndexFromLocalStorage.sessionDuration)
-        }
+  //       // If the requested session is already available in the SessionsArray localStorage
+  //       if (findSessionIndexFromLocalStorage) {
+          
+  //         return Number(findSessionIndexFromLocalStorage.sessionDuration)
+  //       }
         
-        // If the requested session isn't already available in the SessionSarray localStorage
-        else {
-          if (sessionIndex === index) {
-            // console.log('Reached usage', index);
-            return typeLookUp === 'work' ? useDuration : useRestDuration
-          } else {
-            // console.log('Reached default', index);
-            return typeLookUp === 'work' ? defaultWorkDuration : defaultRestDuration
-          }  
-        }
-      }
+  //       // If the requested session isn't already available in the SessionSarray localStorage
+  //       else {
+  //         if (sessionIndex === index) {
+  //           // console.log('Reached usage', index);
+  //           return typeLookUp === 'work' ? useDuration : useRestDuration
+  //         } else {
+  //           // console.log('Reached default', index);
+  //           return typeLookUp === 'work' ? defaultWorkDuration : defaultRestDuration
+  //         }  
+  //       }
+  //     }
 
-      const workObject = {
-        sessionIndex: index,
-        sessionType: 'work',
-        sessionDuration: durationLookUp('work')
-      }
+  //     const workObject = {
+  //       sessionIndex: index,
+  //       sessionType: 'work',
+  //       sessionDuration: durationLookUp('work')
+  //     }
 
-      const restObject = {
-        sessionIndex: index,
-        sessionType: 'break',
-        sessionDuration: durationLookUp('break')
-      }
+  //     const restObject = {
+  //       sessionIndex: index,
+  //       sessionType: 'break',
+  //       sessionDuration: durationLookUp('break')
+  //     }
 
-      const sessionArr = []
-      if (index > 0) sessionArr.push(restObject)
-      sessionArr.push(workObject)
+  //     const sessionArr = []
+  //     if (index > 0) sessionArr.push(restObject)
+  //     sessionArr.push(workObject)
 
-      return sessionArr
-    }).flat()
+  //     return sessionArr
+  //   }).flat()
 
-    // console.log(`current arr ${JSON.stringify(arr)}`);
+  //   // console.log(`current arr ${JSON.stringify(arr)}`);
 
-    updateGlobalSessions({tentativeSessions: [...arr]})
+  //   updateGlobalSessions({tentativeSessions: [...arr]})
 
-  }, [defaultWorkDuration, defaultRestDuration, defaultSessionAmount, sessionIndex, useRestDuration, useDuration])
+  // }, [defaultWorkDuration, defaultRestDuration, defaultSessionAmount, sessionIndex, useRestDuration, useDuration])
 
   useEffect(() => {
     if (beginFocus) {
@@ -198,7 +185,7 @@ export default function Main() {
         setTime(defaultWorkDuration)
         setDuration(defaultWorkDuration)
         setRest(true)
-    } else {
+      } else {
         updateGlobalSessions({
           localSessionIndex: localSessionIndex + 1,
           startCount: false
@@ -207,7 +194,7 @@ export default function Main() {
         setTime(defaultRestDuration)
         setRestDuration(defaultRestDuration)
         setRest(false)
-      }
+      } 
     }
   }, [useTime, useRest, startCount])
 
@@ -221,6 +208,7 @@ export default function Main() {
 
 
   function startFocusHandler () {
+    start()
     setDeadline(addInterval(new Date().toISOString(), `PT${useRest ? useRestDuration : useDuration}S`)) // Use M instead of S when finished with debugging
 
     const currentSession : SessionObject = {
@@ -234,8 +222,6 @@ export default function Main() {
     updateGlobalSessions({
       startCount: true,
       completedSessions: [...completedSessions, currentSession]})
-
-    start()
   }
 
   function finishSessionEarly () {
@@ -399,16 +385,24 @@ export default function Main() {
 
                       <div className="flex flex-col my-4 border-[1px] p-3">
                         <div className="flex flex-row justify-between">
-                          <p>totalSeconds</p>
-                          <p className=" font-black">{totalSeconds}</p>
+                          <p>sessionDuration</p>
+                          <p className=" font-black">{sessionDuration}</p>
                         </div>
                         <div className="flex flex-row justify-between">
-                          <p>seconds</p>
-                          <p className=" font-black">{seconds}</p>
+                          <p>sessionType</p>
+                          <p className=" font-black">{sessionType}</p>
                         </div>
                         <div className="flex flex-row justify-between">
                           <p>isRunning</p>
                           <p className=" font-black">{String(isRunning)}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p>seconds</p>
+                          <p className=" font-black">{String(seconds)}</p>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <p>minutes</p>
+                          <p className=" font-black">{String(minutes)}</p>
                         </div>
                       </div>
 
@@ -573,12 +567,15 @@ export default function Main() {
                   }
                 >
                       { useRest ? 'Rest for ' : 'Work for ' }
-                    </span><br></br>{ useRest ? useRestDuration : useDuration } Minutes </p>
+                    </span><br></br>{ sessionDuration } Minutes </p>
             </div>
             <MainTimeSlider
               useColor={useRest ? 'var(--color-green-400)' : 'var(--color-amber-400)'}
-              useValue={useRest ? useRestDuration : useDuration}
-              onChangeCallback={(e) => useRest ? setRestDuration(e) : setDuration(e)}
+              useValue={sessionDuration}
+              onChangeCallback={(e) => {
+                // useRest ? setRestDuration(e) : setDuration(e)
+                updateGlobalTracker({sessionDuration: e})
+              }}
             />
           </div>
 

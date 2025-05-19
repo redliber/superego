@@ -1,7 +1,8 @@
 import useSWR, { useSWRConfig } from 'swr';
-import { GlobalSessions, GlobalDefaults } from '../lib/types';
+import { GlobalSessions, GlobalDefaults, GlobalTracker, SessionObject, TentativeSessionObject } from '../lib/types';
 import useGlobalDefaults from './useGlobalDefaults';
 import { useEffect } from 'react';
+import useGlobalTracker from './useGlobalTracker';
 
 const STORAGE_KEY = 'app/global-sessions';
 
@@ -15,41 +16,57 @@ const defaultState: GlobalSessions = {
   localSessionIndex: 0
 };
 
+const createTentativeSessions = (restDuration:number, workDuration:number, sessionAmount:number) => {
+  const scaffoldingArray = Array.from({length: sessionAmount}, () => 0)
+  const populateArray:TentativeSessionObject[] | TentativeSessionObject = 
+    scaffoldingArray.map((item, index) => 
+      {
+        const workObject:TentativeSessionObject = {
+          sessionIndex: index,
+          sessionDuration: String(workDuration),
+          sessionType: 'work'
+        }
+        
+        const restObject:TentativeSessionObject = {
+          sessionIndex: index,
+          sessionDuration: String(restDuration),
+          sessionType: 'break'
+        }
+
+        const sessionIndexObjects = []
+        if (index > 0) sessionIndexObjects.push(restObject)
+        sessionIndexObjects.push(workObject)
+
+        return sessionIndexObjects
+        }).flat()
+
+    return populateArray
+}
+
 // Fetcher that retrieves data from localStorage or returns a default state
-const fetcher = (defaults: GlobalDefaults) => {
-  // Generate initial tentative sessions based on defaults
-  const initialTentativeSessions = Array.from(
-    { length: defaults.defaultSessionAmount },
-    (_, index) => ({
-      sessionIndex: index,
-      sessionType: index % 2 === 0 ? 'work' : 'break',
-      sessionDuration:
-        index % 2 === 0 ? defaults.defaultWorkDuration : defaults.defaultRestDuration,
-    })
-  );
+const fetcher = (defaults: GlobalDefaults):GlobalSessions => {
 
   return {
     ...defaultState,
-    tentativeSessions: initialTentativeSessions,
+    tentativeSessions: createTentativeSessions(defaults.defaultRestDuration, defaults.defaultWorkDuration, defaults.defaultSessionAmount),
   };
 };
 
-const fetcherSimple = () => defaultState
-
 export default function useGlobalSessions() {
     const { state: defaults } = useGlobalDefaults();
+    // const { state: tracker } = useGlobalTracker()
     const { cache } = useSWRConfig();
 
     // Use SWR with a key that depends on defaults to ensure re-fetching if defaults change
     const { data, error, mutate } = useSWR(
-            STORAGE_KEY, // Include defaults in the key to handle changes
-            fetcher,
-                {
-                    revalidateOnFocus: false, // Prevent revalidation on tab focus
-                    revalidateOnReconnect: false, // Prevent revalidation on network reconnect
-                    fallbackData: defaultState, // Use dynamic initial state
-                }
-        );
+      STORAGE_KEY, // Include defaults in the key to handle changes
+      () => fetcher(defaults),
+      {
+        revalidateOnFocus: false, // Prevent revalidation on tab focus
+        revalidateOnReconnect: false, // Prevent revalidation on network reconnect
+        fallbackData: defaultState, // Use dynamic initial state
+      }
+    );
     
     useEffect(() => {
         localStorage.removeItem(STORAGE_KEY)
@@ -57,13 +74,13 @@ export default function useGlobalSessions() {
 
     // Initialize localStorage and cache on first render if no data exists
     useEffect(() => {
-        const storedData = localStorage.getItem(STORAGE_KEY);
-        if (!storedData) {
-            const initialData = fetcher(defaults);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-            mutate(initialData, false); // Update cache without revalidation
-            console.log(`Reached First Render`);
-        }
+      const storedData = localStorage.getItem(STORAGE_KEY);
+      if (!storedData) {
+          const initialData = fetcher(defaults);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+          mutate(initialData, false); // Update cache without revalidation
+          console.log(`Reached First Render`);
+      }
     }, [defaults, mutate]);
 
     // Update state and persist to localStorage
@@ -76,9 +93,10 @@ export default function useGlobalSessions() {
     };
 
     return {
-    state: data!,
-    error,
-    updateState,
-    isLoading: !data && !error,
+      state: data!,
+      error,
+      updateState,
+      createTentativeSessions,
+      isLoading: !data && !error,
     };
 }

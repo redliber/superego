@@ -31,6 +31,13 @@ export interface GlobalDefaults {
     defaultSessionAmount: number
 }
 
+export interface GlobalTracker {
+    sessionDuration: number,
+    sessionType: string,
+    sessionBegin: boolean,
+    focusBegin: boolean
+}
+
 export interface GlobalSessions {
     tentativeSessions: any[],
     completedSessions: SessionObject[],
