@@ -7,6 +7,7 @@ import { useTime, useTimer } from "react-timer-hook"
 import useSWR, { useSWRConfig } from "swr"
 import type { SessionObject, EntryObject, TentativeSessionObject } from "@/app/lib/types"
 import useGlobalSessions from "@/app/states/useGlobalSessions"
+import { Play } from "lucide-react"
 
 const PLACEHOLDERDATA = [
     {start: `13:30`, end: `14:30`},
@@ -248,11 +249,15 @@ export default function MainTimeScrub() {
                 {/* Needle Pin */}
                 {
                   checkIfCurrentDay &&
-                  <div id="needlepin" className="h-0.5 bg-amber-50 absolute z-40 w-full place-self-end place-items-end "
+                  <div id="needlepin" className=" absolute flex flex-row justify-center -my-[10px] align-middle items-center z-40 w-[90%] place-self-end place-items-end  "
                       style={{
                           top: `${useCurrent}px`
                       }}
-                  ><p className="text-white font-black text-xs place-self-start py-1">{useCurrent.toFixed(2)}</p></div>
+                  >
+                    <Play fill=" white " size={20} className="-mx-1" />
+                    <div className=" bg-white w-full h-[2.05px] -mx-1 "></div>
+                    {/* <p className="text-white font-thin text-[10px] place-self-start py-1">{useCurrent.toFixed(2)}</p> */}
+                  </div>
                 }
 
 
@@ -383,7 +388,7 @@ function TentativeArea({useCurrent} : {useCurrent:number}) {
           top: `${beginFocus ? useTopPos : useCurrent}px`
       }}
       >
-        <div className= " w-3/4 place-self-end rounded-b-sm overflow-clip h-full "
+        <div className= " w-2/3 place-self-end rounded-b-sm overflow-clip h-full "
         >
           {
             tentativeSessions.map(({sessionDuration, sessionType}, index) => {
@@ -410,7 +415,7 @@ function TentativeArea({useCurrent} : {useCurrent:number}) {
 function TentativeBlock({duration, type, sessionIndex, currentIndex, startCount, needlePinPos, parentPos, beginFocus} : {duration: number, type:string, sessionIndex:number, currentIndex:number, startCount:boolean, needlePinPos:number, parentPos:number, beginFocus:boolean}) {
   const tentativeBlockRef = useRef<HTMLDivElement>(null)
 
-  const colors = type === "work" ? ' bg-amber-300/25 hover:bg-amber-500 ' : ' bg-green-300/25 hover:bg-green-500 '
+  const colors = type === "work" ? ' bg-amber-300/25 hover:bg-amber-500/50 border-amber-500/75 ' : ' bg-green-300/25 hover:bg-green-500/50 border-green-500/75 '
   
   const offsetTop = tentativeBlockRef.current?.offsetTop 
   const absoluteTop = tentativeBlockRef.current?.getBoundingClientRect()
@@ -428,45 +433,48 @@ function TentativeBlock({duration, type, sessionIndex, currentIndex, startCount,
   }, [startCount, sessionIndex, duration])
 
   return (
-    <div
-      ref={tentativeBlockRef}
-      className={` w-full px-2 pt-1 text-xs transition-all overflow-clip duration-150 ease-in-out ` + colors}
-      style={{
-        height: `${useHeight}px`,
-        top: useTop
-      }}
-    >
-      <div className="flex flex-row gap-2 w-full justify-between">
-        <div className="flex flex-row gap-2  w-1/2">
-          <p className=" text-right">Current :</p>
-          <p className=" text-left font-black">{currentIndex}</p>
+    <div className="py-[1px]">
+      <div
+        ref={tentativeBlockRef}
+        className={` w-full px-2 pt-1 text-xs border-l-6 rounded-r-sm transition-all overflow-clip duration-150 ease-in-out ` + colors}
+        style={{
+          height: `${useHeight}px`,
+          top: useTop
+        }}
+      >
+        <div className="flex flex-row gap-2 w-full justify-between">
+          <div className="flex flex-row gap-2  w-1/2">
+            <p className=" text-right">Current :</p>
+            <p className=" text-left font-black">{currentIndex}</p>
+          </div>
+          <div className="flex flex-row gap-2  w-1/2">
+            <p className=" text-right">Session :</p>
+            <p className=" text-left font-black">{sessionIndex}</p>
+          </div>
         </div>
-        <div className="flex flex-row gap-2  w-1/2">
-          <p className=" text-right">Session :</p>
-          <p className=" text-left font-black">{sessionIndex}</p>
-        </div>
-      </div>
 
-      <div className="flex flex-row gap-1 w-full justify-between">
-        <div className="flex flex-row gap-1  w-1/3">
-          <p className=" text-right">Offset :</p>
-          <p className=" text-left font-black">{offsetTop}</p>
+        {/* <div className="flex flex-row gap-1 w-full justify-between">
+          <div className="flex flex-row gap-1  w-1/3">
+            <p className=" text-right">Offset :</p>
+            <p className=" text-left font-black">{offsetTop}</p>
+          </div>
+          <div className="flex flex-row gap-2  w-2/3">
+            <p className=" text-right">Absolute :</p>
+            <p className=" text-left font-black">{absoluteTop?.y.toFixed(2)}</p>
+          </div>
         </div>
-        <div className="flex flex-row gap-2  w-2/3">
-          <p className=" text-right">Absolute :</p>
-          <p className=" text-left font-black">{absoluteTop?.y.toFixed(2)}</p>
+
+        
+        <div className="flex flex-row">
+          <p className="w-1/3 text-left">ParentPos :</p>
+          <p className="w-2/3 text-left font-black">{parentPos.toFixed(2)}</p>
+        </div> */}
+
+        <div className="flex flex-row">
+          <p className="w-1/3 text-left">Duration :</p>
+          <p className="w-2/3 text-left font-black">{String(type).toWellFormed()} for { duration } Minutes</p>
         </div>
-      </div>
 
-      
-      <div className="flex flex-row">
-        <p className="w-1/3 text-left">ParentPos :</p>
-        <p className="w-2/3 text-left font-black">{parentPos.toFixed(2)}</p>
-      </div>
-
-      <div className="flex flex-row">
-        <p className="w-1/3 text-left">Duration :</p>
-        <p className="w-2/3 text-left font-black">{String(type).toWellFormed()} for { duration } Minutes</p>
       </div>
     </div>
   )
