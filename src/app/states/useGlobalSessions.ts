@@ -33,11 +33,11 @@ const createTentativeSessions = (restDuration:number, workDuration:number, sessi
           sessionType: 'break'
         }
 
-        const sessionIndexObjects = []
-        if (index > 0) sessionIndexObjects.push(restObject)
-        sessionIndexObjects.push(workObject)
+        const sessionIndexArray = []
+        if (index > 0) sessionIndexArray.push(restObject)
+        sessionIndexArray.push(workObject)
 
-        return sessionIndexObjects
+        return sessionIndexArray
         }).flat()
 
     return populateArray
@@ -54,7 +54,7 @@ const fetcher = (defaults: GlobalDefaults):GlobalSessions => {
 
 export default function useGlobalSessions() {
     const { state: defaults } = useGlobalDefaults();
-    // const { state: tracker } = useGlobalTracker()
+    
     const { cache } = useSWRConfig();
 
     // Use SWR with a key that depends on defaults to ensure re-fetching if defaults change
@@ -68,6 +68,7 @@ export default function useGlobalSessions() {
       }
     );
     
+    // Making sure we start with a blank slate *MIGHT NEED TO BE ADJUSTED*
     useEffect(() => {
         localStorage.removeItem(STORAGE_KEY)
     }, [])
@@ -79,9 +80,12 @@ export default function useGlobalSessions() {
           const initialData = fetcher(defaults);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
           mutate(initialData, false); // Update cache without revalidation
-          console.log(`Reached First Render`);
       }
     }, [defaults, mutate]);
+
+    useEffect(() => {
+
+    }, [defaults.defaultRestDuration, defaults.defaultWorkDuration])
 
     // Update state and persist to localStorage
     const updateState = (newState: Partial<GlobalSessions>) => {

@@ -82,57 +82,36 @@ export default function Main() {
   const [useLoadingPosting, setLoadingPosting] = useState(false)
   const [useDebug, setDebug] = useState(true)
 
-  // Planning tentativeSessions
-  // useEffect(() => {
-  //   const arr = Array.from({ length: defaultSessionAmount }, () => 0).map((item, index) => {
+  function handleTentativeSessionsChange (newDuration:number, target:string) {
+    const newTentativeSessions:TentativeSessionObject[] = tentativeSessions
+    if (target !== "session") {
+      const adjustedNewTentativeSessions:TentativeSessionObject[] = newTentativeSessions.map(({sessionType, sessionDuration, sessionIndex}, index) => {
+        const determineDuration = ():string => {
+          if (target === "default-work" && sessionType === "work") {
+            return String(newDuration)
+          } else if ((target === "default-break" && sessionType === "break")) {
+            return String(newDuration)
+          } else {
+            return sessionDuration
+          }
+        } 
 
-  //     const durationLookUp = (typeLookUp:string):number => {
-  //       const findSessionIndexFromLocalStorage = completedSessions.find((item) => 
-  //         item.sessionType === typeLookUp && item.sessionIndex === index
-  //       )
+        return {
+          sessionDuration: determineDuration(),
+          sessionIndex: sessionIndex,
+          sessionType: sessionType
+        }
+      })  
 
-  //       // If the requested session is already available in the SessionsArray localStorage
-  //       if (findSessionIndexFromLocalStorage) {
-          
-  //         return Number(findSessionIndexFromLocalStorage.sessionDuration)
-  //       }
-        
-  //       // If the requested session isn't already available in the SessionSarray localStorage
-  //       else {
-  //         if (sessionIndex === index) {
-  //           // console.log('Reached usage', index);
-  //           return typeLookUp === 'work' ? useDuration : useRestDuration
-  //         } else {
-  //           // console.log('Reached default', index);
-  //           return typeLookUp === 'work' ? defaultWorkDuration : defaultRestDuration
-  //         }  
-  //       }
-  //     }
+      updateGlobalSessions({
+        tentativeSessions: adjustedNewTentativeSessions
+      })
+    } else {
+      newTentativeSessions[localSessionIndex].sessionDuration = String(newDuration)
+      updateGlobalSessions({tentativeSessions: newTentativeSessions})
+    }
 
-  //     const workObject = {
-  //       sessionIndex: index,
-  //       sessionType: 'work',
-  //       sessionDuration: durationLookUp('work')
-  //     }
-
-  //     const restObject = {
-  //       sessionIndex: index,
-  //       sessionType: 'break',
-  //       sessionDuration: durationLookUp('break')
-  //     }
-
-  //     const sessionArr = []
-  //     if (index > 0) sessionArr.push(restObject)
-  //     sessionArr.push(workObject)
-
-  //     return sessionArr
-  //   }).flat()
-
-  //   // console.log(`current arr ${JSON.stringify(arr)}`);
-
-  //   updateGlobalSessions({tentativeSessions: [...arr]})
-
-  // }, [defaultWorkDuration, defaultRestDuration, defaultSessionAmount, sessionIndex, useRestDuration, useDuration])
+  }
 
   useEffect(() => {
     if (beginFocus) {
@@ -473,7 +452,11 @@ export default function Main() {
 
         {/* TIMELINE SCRUB */}
         <div className="w-3/4 grow px-6 py-6 border-[1px] rounded-md bg-gray-900 flex flex-col justify-between">
+
+          {/* SESSION INDICES and DEFAULT SETTINGS */}
           <div className="flex flex-row gap-4 h-2 my-6">
+            
+            {/* SESSION INDICES */}
             {Array.from({length: defaultSessionAmount}, () => 0).map((item, index) => (
               <div key={index} 
                 className={`min-h-full transition-all duration-500 ease-in-out ` 
@@ -500,6 +483,7 @@ export default function Main() {
                         useValue={defaultWorkDuration}
                         onChangeCallback={(e) => {
                           updateGlobalDefaults({defaultWorkDuration:e})
+                          handleTentativeSessionsChange(e, 'default-work')
                         }}
                         />
                   </div>
@@ -512,6 +496,7 @@ export default function Main() {
                         useValue={defaultRestDuration}
                         onChangeCallback={(e) => {
                           updateGlobalDefaults({defaultRestDuration:e})
+                          handleTentativeSessionsChange(e, 'default-break')
                         }}
                         />
                   </div>
@@ -539,6 +524,7 @@ export default function Main() {
           </div>
 
 
+          {/* FOCUS BOX */}
           <div className="min-h-24 min-w-full">
             {
               beginFocus && (
@@ -554,27 +540,28 @@ export default function Main() {
             }
           </div>
 
+
           {/* MAIN TIME SLIDER */}
           <div className="">
             <div className="flex flex-row p-2 mb-12 justify-between">
               <p className={`text-8xl cursor-default select-none font-black leading-20 overflow-hidden text-ellipsis transition-all duration-100 ease-in-out`}>
                 <span 
                   className={
-                    useRest ? 
+                    sessionType === 'break' ? 
                     ` text-green-400 text-shadow-green-200 hover:text-green-200 ` : 
                     ` text-amber-400 text-shadow-amber-200 hover:text-amber-200 ` 
                     + ` text-shadow-sm hover:text-shadow-md transition-all duration-200 ease-in-out `
                   }
                 >
-                      { useRest ? 'Rest for ' : 'Work for ' }
-                    </span><br></br>{ sessionDuration } Minutes </p>
+                      { sessionType === 'break' ? 'Rest for ' : 'Work for ' }
+                    </span><br></br>{ seconds } Minutes </p>
             </div>
             <MainTimeSlider
-              useColor={useRest ? 'var(--color-green-400)' : 'var(--color-amber-400)'}
-              useValue={sessionDuration}
+              useColor={sessionType === 'break' ? 'var(--color-green-400)' : 'var(--color-amber-400)'}
+              useValue={seconds}
               onChangeCallback={(e) => {
-                // useRest ? setRestDuration(e) : setDuration(e)
                 updateGlobalTracker({sessionDuration: e})
+                handleTentativeSessionsChange(e, 'session')
               }}
             />
           </div>

@@ -61,6 +61,15 @@ export default function useGlobalTracker() {
         }
     };
 
+    const handleDurationChange = (targetDuration:number, mutateDuration:boolean=false) => {
+        const newTargetTime = restartTimerToTime(targetDuration)
+        setTargetTime(newTargetTime)
+        restart(newTargetTime, false)
+        if (mutateDuration) {
+            mutate({...data, sessionDuration: targetDuration}, false)
+        }
+    }
+
     const { 
         seconds, 
         minutes, 
@@ -75,36 +84,34 @@ export default function useGlobalTracker() {
         onExpire: handleTimerExpire,
     });
 
+    // Initial Loading, waiting for the defaults from useGlobalDefaults
     useEffect(() => {
         if (!loadingDefaults) {
-            // console.log('Finished Loading Defaults', defaults);
             const targetDuration = data.sessionType === "work" ? defaults.defaultWorkDuration : defaults.defaultRestDuration
-            const newTargetTime = restartTimerToTime(targetDuration)
-            setTargetTime(newTargetTime)
-            restart(newTargetTime, false)
-            mutate({...data, sessionDuration: targetDuration}, false)
+            handleDurationChange(targetDuration, true)
         }
     }, [loadingDefaults])
     
+    // Adjust changing sessionDuration
     useEffect(() => {
-        const targetDuration:number = data?.sessionDuration
-        const newTargetTime = restartTimerToTime(targetDuration)
-        setTargetTime(newTargetTime)
-        restart(newTargetTime, false)
-
+        handleDurationChange(data?.sessionDuration)
     }, [data.sessionDuration, data.sessionType, mutate]);
     
+    // Adjust changing defaultDuration
     useEffect(() => {
         const targetDuration:number = data.sessionType === "work" ? defaults.defaultWorkDuration : defaults.defaultRestDuration
-        const newTargetTime = restartTimerToTime(targetDuration)
-        setTargetTime(newTargetTime)
-        restart(newTargetTime, false)
-        mutate({...data, sessionDuration: targetDuration}, false)
+        handleDurationChange(targetDuration, true)
     }, [defaults.defaultRestDuration, defaults.defaultWorkDuration])
+
+    // // Starting Sessions
+    // useEffect(() => {
+    //     if (isRunning) {
+    //         mutate({...data, sessionDuration: seconds}, false)
+    //     }
+    // }, [start, seconds, minutes, isRunning])
 
     const updateState = (newState: Partial<GlobalTracker>) => {
         const updatedData = { ...data, ...newState } as GlobalTracker;
-        // console.log('Reached Data Mutation in useGlobalTracker.ts', newState)
         mutate(updatedData, false);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
     };

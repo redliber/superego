@@ -400,7 +400,7 @@ function TentativeArea({useCurrent} : {useCurrent:number}) {
                     sessionIndex={sessionIndex}
                     needlePinPos={useCurrent}
                     startCount={startCount}
-                    duration={ sessionDuration }
+                    duration={ Number(sessionDuration) }
                     type={ sessionType }
                     beginFocus={beginFocus}
                     />

@@ -39,7 +39,7 @@ export interface GlobalTracker {
 }
 
 export interface GlobalSessions {
-    tentativeSessions: any[],
+    tentativeSessions: TentativeSessionObject[],
     completedSessions: SessionObject[],
     beginFocus: boolean,
     startCount: boolean,
