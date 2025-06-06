@@ -40,7 +40,12 @@ const createTentativeSessions = (restDuration:number, workDuration:number, sessi
         return sessionIndexArray
         }).flat()
 
-    return populateArray
+  return populateArray.map((item, index) => (
+    {
+      ...item,
+      localSessionIndex: index
+    }
+  ))
 }
 
 // Fetcher that retrieves data from localStorage or returns a default state

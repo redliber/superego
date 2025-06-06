@@ -123,6 +123,7 @@ export default function useGlobalTracker() {
         pause,
         resume,
         restart,
+        handleDurationChange,
         error,
         updateState,
         isLoading: !data && !error,

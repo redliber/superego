@@ -51,7 +51,7 @@ export default function Main() {
   const {
     state:globalTracker, 
     timeObject,
-    start, pause, resume, restart, 
+    start, pause, resume, restart, handleDurationChange,
     updateState:updateGlobalTracker 
   } = useGlobalTracker()
   
@@ -131,6 +131,8 @@ export default function Main() {
     }
   }, [beginFocus])
 
+
+  // CAN I DELETE THESE?
   // Logic for Starting Count
   useEffect(() => {
     if (startCount) {
@@ -204,16 +206,28 @@ export default function Main() {
   }
 
   function finishSessionEarly () {
-    const adjustDuration = useDifference
+    // TEMPORARY DEVNOTE CHANGE TO MINUTES
+    const adjustDuration = seconds
     const getCompleteSessions = completedSessions
-    const adjustCurrentSession = getCompleteSessions[localSessionIndex]
-    const currentSessionDuration = adjustCurrentSession.sessionDuration
-    adjustCurrentSession.sessionDuration = String(Number(currentSessionDuration) - adjustDuration)
+    const currentSessionDuration = getCompleteSessions[localSessionIndex].sessionDuration
+
+    const elapsed = String(Math.abs(Number(currentSessionDuration) - adjustDuration))
+    console.log('adjustDuration --> ', adjustDuration)
+    console.log('elapsed --> ', elapsed)
+
+    // Replace the session duration with the amount of time elapsed.
+    getCompleteSessions[localSessionIndex].sessionDuration = elapsed
     
     updateGlobalSessions({
       completedSessions: getCompleteSessions
     })
 
+    const nextDuration = Number(tentativeSessions[localSessionIndex+1].sessionDuration)
+
+    handleDurationChange(nextDuration, false)
+    updateGlobalTracker({
+      sessionType: sessionType == 'work' ? 'break' : 'work'
+    })
     setTime(0)
   }
 
