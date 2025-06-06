@@ -193,7 +193,7 @@ export default function Main() {
     const currentSession : SessionObject = {
       sessionIndex: sessionIndex,
       sessionTime: parseTimeZoneBeforePOST(DateTime.now().toISO()),
-      sessionDuration: String(useRest ? useRestDuration : useDuration),
+      sessionDuration: String(sessionDuration),
       sessionType: useRest ? 'break' : 'work',
     }
 

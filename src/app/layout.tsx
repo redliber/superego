@@ -4,6 +4,8 @@ import localFont from 'next/font/local'
 
 import "./globals.css";
 import { SWRConfig } from "swr";
+import Head from "next/head";
+import { ThemeProvider } from "next-themes";
 
 const mainFont = Space_Grotesk({
   subsets: ["latin"],
@@ -31,11 +33,18 @@ export default function RootLayout({
     <SWRConfig 
       // value={{fetcher: fetcher}}
     >
-      <html>
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${mainFont.className} ${gothicExtended.variable} antialiased`}
         >
+          <ThemeProvider 
+            attribute="class" 
+            defaultTheme="dark"
+            enableSystem={false}
+            forcedTheme="dark"
+            >
             {children}
+          </ThemeProvider>
         </body>
       </html>
     </SWRConfig>
